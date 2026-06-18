@@ -8,7 +8,7 @@ export type GamePhase =
   | "game_over";
 
 export interface MediaPayload {
-  kind: "image" | "audio" | "text";
+  kind: "image" | "audio" | "video" | "text";
   url?: string;
   clues?: string[];
 }

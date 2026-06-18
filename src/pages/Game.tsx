@@ -3,6 +3,7 @@ import { AudioReveal } from "../components/AudioReveal";
 import { PixelImage } from "../components/PixelImage";
 import { Scoreboard } from "../components/Scoreboard";
 import { Timer } from "../components/Timer";
+import { VideoReveal } from "../components/VideoReveal";
 import { getCategoryMeta } from "../constants/categoryMeta";
 import { useGame } from "../context/GameContext";
 import type { MediaPayload } from "../types/messages";
@@ -13,6 +14,8 @@ function MediaView({ media, revealed }: { media: MediaPayload | null; revealed: 
     return <PixelImage src={media.url} revealed={revealed} />;
   if (media.kind === "audio" && media.url)
     return <AudioReveal src={media.url} />;
+  if (media.kind === "video" && media.url)
+    return <VideoReveal src={media.url} />;
   if (media.kind === "text") {
     return (
       <ul className="clues">
