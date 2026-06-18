@@ -24,6 +24,8 @@ export interface RoomSettings {
   categories: string[];
   total_rounds: number;
   round_duration: number;
+  allow_multiple_attempts: boolean;
+  end_on_all_correct: boolean;
 }
 
 export interface RankEntry {
@@ -67,6 +69,15 @@ export interface RevealUpdate {
 export interface AnswerResult {
   type: "answer_result";
   correct: boolean;
+  locked: boolean;
+}
+
+export interface RoundPaused {
+  type: "round_paused";
+}
+
+export interface RoundResumed {
+  type: "round_resumed";
 }
 
 export interface RevealAnswer {
@@ -102,11 +113,22 @@ export type ServerMessage =
   | RevealAnswer
   | Scoreboard
   | GameOver
+  | RoundPaused
+  | RoundResumed
   | ErrorMsg;
 
 // ---- Mensagens cliente -> servidor ----
 
 export type ClientMessage =
   | { type: "join"; name?: string }
-  | { type: "start_game"; categories: string[]; total_rounds: number }
-  | { type: "submit_answer"; guess: string };
+  | {
+      type: "start_game";
+      categories: string[];
+      total_rounds: number;
+      round_duration?: number;
+      allow_multiple_attempts?: boolean;
+      end_on_all_correct?: boolean;
+    }
+  | { type: "submit_answer"; guess: string }
+  | { type: "pause_round" }
+  | { type: "resume_round" };

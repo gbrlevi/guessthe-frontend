@@ -31,7 +31,7 @@ function MediaView({ media, revealed }: { media: MediaPayload | null; revealed: 
 export function Game() {
   const {
     phase, round, totalRounds, category, media, timeLeft, duration,
-    revealAnswer, ranking, isHost, backToLobby,
+    revealAnswer, ranking, isHost, backToLobby, paused, pauseRound, resumeRound,
   } = useGame();
 
   const meta = getCategoryMeta(category);
@@ -62,6 +62,17 @@ export function Game() {
   const revealed = phase === "reveal";
   return (
     <div className="game">
+      {paused && (
+        <div className="paused-overlay">
+          ⏸ Partida pausada
+          {isHost && (
+            <button className="btn-resume" onClick={resumeRound}>
+              Retomar
+            </button>
+          )}
+        </div>
+      )}
+
       <header className="game-header">
         <span className="category">
           {meta.icon} {meta.label}
@@ -69,11 +80,20 @@ export function Game() {
         <span className="round">
           {round}/{totalRounds}
         </span>
+        {isHost && !revealed && (
+          <button
+            className="btn-pause"
+            onClick={paused ? resumeRound : pauseRound}
+            title={paused ? "Retomar" : "Pausar"}
+          >
+            {paused ? "▶" : "⏸"}
+          </button>
+        )}
       </header>
 
       {!revealed && (
         <>
-          <Timer timeLeft={timeLeft} duration={duration} />
+          <Timer timeLeft={paused ? timeLeft : timeLeft} duration={duration} />
           <p className="media-hint">{meta.mediaHint}</p>
         </>
       )}
@@ -87,7 +107,7 @@ export function Game() {
           Resposta: <strong>{revealAnswer}</strong>
         </div>
       ) : (
-        <AnswerInput />
+        !paused && <AnswerInput />
       )}
     </div>
   );

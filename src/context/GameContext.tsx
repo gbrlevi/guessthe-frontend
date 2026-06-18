@@ -32,21 +32,36 @@ interface GameState {
   round: number;
   totalRounds: number;
   category: string;
-  mediaType: "image" | "audio" | "text";
+  mediaType: "image" | "audio" | "video" | "text";
   duration: number;
   media: MediaPayload | null;
   timeLeft: number | null;
 
   answered: boolean;
+  submitting: boolean;
   answerResult: boolean | null;
+  paused: boolean;
+
+  autocompleteEnabled: boolean;
 
   revealAnswer: string | null;
   ranking: RankEntry[];
 
   createRoom: (name: string) => Promise<void>;
   joinRoom: (code: string, name: string) => void;
-  startGame: (categories: string[], totalRounds: number) => void;
+  startGame: (
+    categories: string[],
+    totalRounds: number,
+    config: {
+      roundDuration: number;
+      allowMultipleAttempts: boolean;
+      endOnAllCorrect: boolean;
+      autocomplete: boolean;
+    },
+  ) => void;
   submitAnswer: (guess: string) => void;
+  pauseRound: () => void;
+  resumeRound: () => void;
   backToLobby: () => void;
 }
 
@@ -63,13 +78,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [round, setRound] = useState(0);
   const [totalRounds, setTotalRounds] = useState(0);
   const [category, setCategory] = useState("");
-  const [mediaType, setMediaType] = useState<"image" | "audio" | "text">("image");
+  const [mediaType, setMediaType] = useState<"image" | "audio" | "video" | "text">("image");
   const [duration, setDuration] = useState(20);
   const [media, setMedia] = useState<MediaPayload | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   const [answered, setAnswered] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [answerResult, setAnswerResult] = useState<boolean | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [autocompleteEnabled, setAutocompleteEnabled] = useState(true);
 
   const [revealAnswer, setRevealAnswer] = useState<string | null>(null);
   const [ranking, setRanking] = useState<RankEntry[]>([]);
@@ -96,8 +114,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setMedia(msg.media);
         setTimeLeft(Math.round(msg.duration));
         setAnswered(false);
+        setSubmitting(false);
         setAnswerResult(null);
         setRevealAnswer(null);
+        setPaused(false);
         setPhase("question");
         break;
       case "reveal_update":
@@ -106,6 +126,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         break;
       case "answer_result":
         setAnswerResult(msg.correct);
+        setAnswered(msg.locked);
+        setSubmitting(false);
         break;
       case "reveal_answer":
         setRevealAnswer(msg.answer);
@@ -119,6 +141,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       case "game_over":
         setRanking(msg.ranking);
         setPhase("game_over");
+        break;
+      case "round_paused":
+        setPaused(true);
+        break;
+      case "round_resumed":
+        setPaused(false);
         break;
       case "error":
         setError(msg.message);
@@ -162,57 +190,59 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const startGame = useCallback(
-    (categories: string[], rounds: number) => {
-      send({ type: "start_game", categories, total_rounds: rounds });
+    (
+      categories: string[],
+      rounds: number,
+      config: {
+        roundDuration: number;
+        allowMultipleAttempts: boolean;
+        endOnAllCorrect: boolean;
+        autocomplete: boolean;
+      },
+    ) => {
+      setAutocompleteEnabled(config.autocomplete);
+      send({
+        type: "start_game",
+        categories,
+        total_rounds: rounds,
+        round_duration: config.roundDuration,
+        allow_multiple_attempts: config.allowMultipleAttempts,
+        end_on_all_correct: config.endOnAllCorrect,
+      });
     },
     [send],
   );
 
   const submitAnswer = useCallback(
     (guess: string) => {
-      if (answered) return;
-      setAnswered(true);
+      if (answered || submitting) return;
+      setSubmitting(true);
       send({ type: "submit_answer", guess });
     },
-    [send, answered],
+    [send, answered, submitting],
   );
 
-  // Pede ao servidor o estado atual do lobby (reabre o lobby após o game over).
+  const pauseRound = useCallback(() => send({ type: "pause_round" }), [send]);
+  const resumeRound = useCallback(() => send({ type: "resume_round" }), [send]);
+
   const backToLobby = useCallback(() => {
     send({ type: "join" });
   }, [send]);
 
   const value = useMemo<GameState>(
     () => ({
-      phase,
-      status,
-      error,
-      code,
-      isHost,
-      players,
-      settings,
-      round,
-      totalRounds,
-      category,
-      mediaType,
-      duration,
-      media,
-      timeLeft,
-      answered,
-      answerResult,
-      revealAnswer,
-      ranking,
-      createRoom,
-      joinRoom,
-      startGame,
-      submitAnswer,
-      backToLobby,
+      phase, status, error, code, isHost, players, settings,
+      round, totalRounds, category, mediaType, duration, media, timeLeft,
+      answered, submitting, answerResult, paused, autocompleteEnabled,
+      revealAnswer, ranking,
+      createRoom, joinRoom, startGame, submitAnswer, pauseRound, resumeRound, backToLobby,
     }),
     [
-      phase, status, error, code, isHost, players, settings, round, totalRounds,
-      category, mediaType, duration, media, timeLeft, answered, answerResult,
-      revealAnswer, ranking, createRoom, joinRoom, startGame, submitAnswer,
-      backToLobby,
+      phase, status, error, code, isHost, players, settings,
+      round, totalRounds, category, mediaType, duration, media, timeLeft,
+      answered, submitting, answerResult, paused, autocompleteEnabled,
+      revealAnswer, ranking,
+      createRoom, joinRoom, startGame, submitAnswer, pauseRound, resumeRound, backToLobby,
     ],
   );
 
