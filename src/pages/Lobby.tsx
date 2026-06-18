@@ -9,11 +9,27 @@ interface CategoryInfo {
   count: number;
 }
 
+interface GameConfig {
+  roundDuration: number;
+  allowMultipleAttempts: boolean;
+  endOnAllCorrect: boolean;
+  autocomplete: boolean;
+}
+
+const DEFAULT_CONFIG: GameConfig = {
+  roundDuration: 20,
+  allowMultipleAttempts: true,
+  endOnAllCorrect: true,
+  autocomplete: true,
+};
+
 export function Lobby() {
   const { code, isHost, players, startGame, error } = useGame();
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [rounds, setRounds] = useState(10);
+  const [config, setConfig] = useState<GameConfig>(DEFAULT_CONFIG);
+  const [showConfig, setShowConfig] = useState(false);
 
   useEffect(() => {
     fetch(`${API}/categories`)
@@ -29,6 +45,9 @@ export function Lobby() {
 
   const selectAll = () => setSelected(categories.map((c) => c.category));
   const clearAll = () => setSelected([]);
+
+  const updateConfig = (key: keyof GameConfig, value: unknown) =>
+    setConfig((prev) => ({ ...prev, [key]: value }));
 
   return (
     <div className="lobby">
@@ -86,18 +105,24 @@ export function Lobby() {
             })}
           </div>
 
-          <label className="rounds">
-            Rounds
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={rounds}
-              onChange={(e) => setRounds(Number(e.target.value))}
-            />
-          </label>
+          <div className="lobby-actions">
+            <label className="rounds">
+              Rounds
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={rounds}
+                onChange={(e) => setRounds(Number(e.target.value))}
+              />
+            </label>
 
-          <button onClick={() => startGame(selected, rounds)}>
+            <button className="btn-outline" onClick={() => setShowConfig(true)}>
+              ⚙ Configurações
+            </button>
+          </div>
+
+          <button onClick={() => startGame(selected, rounds, config)}>
             Iniciar partida
           </button>
           <p className="hint">
@@ -109,6 +134,68 @@ export function Lobby() {
       )}
 
       {error && <p className="error">{error}</p>}
+
+      {/* Modal de configurações */}
+      {showConfig && (
+        <div className="modal-backdrop" onClick={() => setShowConfig(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2>⚙ Configurações</h2>
+
+            <label className="config-row">
+              <span>Duração do round</span>
+              <div className="config-input-group">
+                <input
+                  type="range"
+                  min={5}
+                  max={120}
+                  step={5}
+                  value={config.roundDuration}
+                  onChange={(e) => updateConfig("roundDuration", Number(e.target.value))}
+                />
+                <span className="config-value">{config.roundDuration}s</span>
+              </div>
+            </label>
+
+            <label className="config-row toggle">
+              <span>
+                Múltiplas tentativas
+                <small>Permite errar e tentar novamente até acabar o tempo</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={config.allowMultipleAttempts}
+                onChange={(e) => updateConfig("allowMultipleAttempts", e.target.checked)}
+              />
+            </label>
+
+            <label className="config-row toggle">
+              <span>
+                Encerrar quando todos acertarem
+                <small>O round termina assim que o último jogador acerta</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={config.endOnAllCorrect}
+                onChange={(e) => updateConfig("endOnAllCorrect", e.target.checked)}
+              />
+            </label>
+
+            <label className="config-row toggle">
+              <span>
+                Autocomplete
+                <small>Sugere respostas ao digitar 3+ letras</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={config.autocomplete}
+                onChange={(e) => updateConfig("autocomplete", e.target.checked)}
+              />
+            </label>
+
+            <button onClick={() => setShowConfig(false)}>Fechar</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
