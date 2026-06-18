@@ -93,7 +93,7 @@ export function Game() {
 
       {!revealed && (
         <>
-          <Timer timeLeft={paused ? timeLeft : timeLeft} duration={duration} />
+          <Timer timeLeft={timeLeft} duration={duration} paused={paused} />
           <p className="media-hint">{meta.mediaHint}</p>
         </>
       )}
