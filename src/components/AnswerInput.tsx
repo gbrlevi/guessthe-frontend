@@ -11,6 +11,20 @@ export function AnswerInput() {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  // Refs atualizados a cada render para que o cleanup de unmount leia valores atuais
+  const guessRef = useRef("");
+  const submitRef = useRef(submitAnswer);
+  guessRef.current = guess;
+  submitRef.current = submitAnswer;
+
+  // Ao desmontar (round acabou), envia o texto pendente como resposta final
+  useEffect(() => {
+    return () => {
+      const g = guessRef.current.trim();
+      if (g) submitRef.current(g); // submitAnswer já guarda contra answered/submitting
+    };
+  }, []);
+
   // busca sugestões com debounce
   useEffect(() => {
     clearTimeout(debounceRef.current);
