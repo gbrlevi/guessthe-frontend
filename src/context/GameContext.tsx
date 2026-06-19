@@ -92,6 +92,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [revealAnswer, setRevealAnswer] = useState<string | null>(null);
   const [ranking, setRanking] = useState<RankEntry[]>([]);
 
+  // URL opaca do vídeo pré-buscada durante o palpite (não exposta no contexto público)
+  const [prefetchVideoUrl, setPrefetchVideoUrl] = useState<string | null>(null);
+
   const handleMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
       case "lobby_update":
@@ -118,6 +121,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setAnswerResult(null);
         setRevealAnswer(null);
         setPaused(false);
+        // pré-busca o vídeo do reveal (URL opaca) já durante o palpite, sem bloquear
+        setPrefetchVideoUrl(msg.prefetch_url ? `${API}${msg.prefetch_url}` : null);
         setPhase("question");
         break;
       case "reveal_update":
@@ -132,6 +137,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       case "reveal_answer":
         setRevealAnswer(msg.answer);
         setMedia(msg.media);
+        // o VideoReveal assume com a MESMA URL (já em cache) → toca instantâneo
+        setPrefetchVideoUrl(null);
         setPhase("reveal");
         break;
       case "scoreboard":
@@ -246,7 +253,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={value}>
+      {children}
+      {/* Pré-busca oculta do vídeo do reveal durante o palpite (proxy limita os bytes) */}
+      {prefetchVideoUrl && (
+        <video
+          key={prefetchVideoUrl}
+          src={prefetchVideoUrl}
+          preload="auto"
+          muted
+          style={{ display: "none" }}
+        />
+      )}
+    </Ctx.Provider>
+  );
 }
 
 export function useGame(): GameState {

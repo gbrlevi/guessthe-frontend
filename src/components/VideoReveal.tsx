@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
-// Toca a abertura no reveal. O vídeo é o .webm cru do AnimeThemes (Range nativo do
-// browser, sem Cloudinary). Exibido só quando pode tocar — evita pop-in/buffering.
-// Safari/iOS não decodifica webm: nesse caso mostra um aviso em vez de travar.
+const API = import.meta.env.VITE_API_URL;
+
+// Toca a abertura no reveal. O vídeo vem pelo proxy opaco do backend (.webm via Range),
+// já pré-buscado durante o palpite → cache hit → toca instantâneo, sem delay.
+// Exibido só quando pode tocar (evita pop-in). Safari/iOS não decodifica webm: mostra aviso.
 export function VideoReveal({ src }: { src: string }) {
+  const url = src.startsWith("http") ? src : `${API}${src}`;
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -14,7 +17,7 @@ export function VideoReveal({ src }: { src: string }) {
     const el = videoRef.current;
     if (!el) return;
     el.load();
-  }, [src]);
+  }, [url]);
 
   const handleReady = () => {
     setReady(true);
@@ -30,7 +33,7 @@ export function VideoReveal({ src }: { src: string }) {
       )}
       <video
         ref={videoRef}
-        src={src}
+        src={url}
         controls
         autoPlay
         playsInline

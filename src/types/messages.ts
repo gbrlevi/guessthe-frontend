@@ -57,6 +57,7 @@ export interface QuestionStart {
   media_type: "image" | "audio" | "text" | "video";
   duration: number;
   media: MediaPayload;
+  prefetch_url?: string; // caminho opaco do vídeo p/ pré-buscar durante o palpite
 }
 
 export interface RevealUpdate {
