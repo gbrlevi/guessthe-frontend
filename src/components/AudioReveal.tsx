@@ -1,20 +1,22 @@
 import { useEffect, useRef } from "react";
 
-// recarrega e dá play sempre que a URL muda (servidor controla o tamanho do trecho)
+const API = import.meta.env.VITE_API_URL;
+
 export function AudioReveal({ src }: { src: string }) {
+  const url = src.startsWith("http") ? src : `${API}${src}`;
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
     el.load();
-    el.play().catch(() => {});  // autoplay bloqueado até 1ª interação — ignorar
-  }, [src]);
+    el.play().catch(() => {});
+  }, [url]);
 
   return (
     <div className="media-frame audio">
       <span aria-hidden>🔊</span>
-      <audio ref={audioRef} src={src} controls />
+      <audio ref={audioRef} src={url} controls />
     </div>
   );
 }
