@@ -54,7 +54,7 @@ export interface QuestionStart {
   round: number;
   total_rounds: number;
   category: string;
-  media_type: "image" | "audio" | "text";
+  media_type: "image" | "audio" | "text" | "video";
   duration: number;
   media: MediaPayload;
 }
