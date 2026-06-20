@@ -1,4 +1,4 @@
-import { avatarFor } from "../constants/avatars";
+import type { AvatarKind } from "../constants/avatars";
 import type { PlayerPublic } from "../types/messages";
 import { Avatar } from "./Avatar";
 import { MedalIcon, MicIcon } from "./icons";
@@ -6,11 +6,6 @@ import styles from "./Leaderboard.module.css";
 
 const MEDAL_COLORS = ["#FFC62E", "#D9DEE3", "#E08A4A"];
 
-/**
- * Placar ao vivo da Arena. Usa os jogadores reais (lobby_update); os scores
- * atualizam entre rounds (scoreboard). Avatares são derivados do id (avatarFor),
- * pois o backend não transmite avatar por jogador.
- */
 export function Leaderboard({ players }: { players: PlayerPublic[] }) {
   const sorted = [...players].sort((a, b) => b.score - a.score);
   return (
@@ -29,7 +24,7 @@ export function Leaderboard({ players }: { players: PlayerPublic[] }) {
               {i < 3 ? <MedalIcon size={23} color={MEDAL_COLORS[i]} /> : <span className={styles.rankNum}>#{i + 1}</span>}
             </div>
             <div className={styles.avatar}>
-              <Avatar kind={avatarFor(p.id)} />
+              <Avatar kind={(p.avatar as AvatarKind) || "fox"} />
             </div>
             <div className={styles.name}>{p.name}</div>
             <div className={styles.score}>{p.score}</div>

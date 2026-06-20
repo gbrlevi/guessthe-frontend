@@ -18,6 +18,7 @@ export interface PlayerPublic {
   name: string;
   score: number;
   is_host: boolean;
+  avatar: string;
 }
 
 export interface RoomSettings {
@@ -38,6 +39,7 @@ export interface RoundResult {
   name: string;
   correct: boolean;
   score: number;
+  avatar: string;
 }
 
 // ---- Mensagens servidor -> cliente ----
@@ -107,6 +109,15 @@ export interface GameOver {
   ranking: RankEntry[];
 }
 
+export interface ChatMessage {
+  type: "chat_message";
+  player_id: string;
+  player_name: string;
+  avatar: string;
+  msg_type: "guess" | "correct";
+  text: string;
+}
+
 export interface ErrorMsg {
   type: "error";
   message: string;
@@ -123,6 +134,7 @@ export type ServerMessage =
   | GameOver
   | RoundPaused
   | RoundResumed
+  | ChatMessage
   | ErrorMsg;
 
 // ---- Mensagens cliente -> servidor ----

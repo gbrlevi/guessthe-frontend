@@ -1,4 +1,4 @@
-import { avatarFor } from "../constants/avatars";
+import type { AvatarKind } from "../constants/avatars";
 import { Avatar } from "./Avatar";
 import { MedalIcon, StarIcon } from "./icons";
 import styles from "./ScorerList.module.css";
@@ -7,6 +7,7 @@ export interface ScorerEntry {
   id?: string;
   name: string;
   score: number;
+  avatar?: string;
 }
 
 const MEDAL_COLORS = ["#FFC62E", "#D9DEE3", "#E08A4A"];
@@ -31,7 +32,7 @@ export function ScorerList({ entries }: { entries: ScorerEntry[] }) {
             )}
           </div>
           <div className={styles.avatar}>
-            <Avatar kind={avatarFor(e.id ?? e.name)} />
+            <Avatar kind={(e.avatar as AvatarKind) || "fox"} />
           </div>
           <div className={styles.name}>{e.name}</div>
           <div className={styles.score}>{e.score}</div>
