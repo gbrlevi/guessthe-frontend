@@ -89,9 +89,6 @@ export function AnswerInput() {
     <form className={styles.bar} onSubmit={onSubmit}>
       <div className={styles.inner}>
         <div className={styles.autocompleteWrap} ref={wrapperRef}>
-          {answerResult === false && !showSuggestions && (
-            <div className={styles.inlineWrong}>❌ Errou! Tente novamente.</div>
-          )}
           <input
             className={styles.input}
             autoFocus
