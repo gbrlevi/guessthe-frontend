@@ -7,7 +7,9 @@ import {
   type ReactNode,
 } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
+import type { AvatarKind } from "../constants/avatars";
 import type {
+  ChatMessage,
   GamePhase,
   MediaPayload,
   PlayerPublic,
@@ -20,6 +22,8 @@ import type {
 const API = import.meta.env.VITE_API_URL;
 const WS = import.meta.env.VITE_WS_URL;
 
+const MAX_CHAT_MESSAGES = 80;
+
 interface GameState {
   phase: GamePhase;
   status: string;
@@ -27,6 +31,7 @@ interface GameState {
 
   code: string | null;
   isHost: boolean;
+  myAvatar: AvatarKind;
   players: PlayerPublic[];
   settings: RoomSettings | null;
 
@@ -49,8 +54,10 @@ interface GameState {
   revealResults: RoundResult[];
   ranking: RankEntry[];
 
-  createRoom: (name: string) => Promise<void>;
-  joinRoom: (code: string, name: string) => void;
+  chatMessages: ChatMessage[];
+
+  createRoom: (name: string, avatar: AvatarKind, roomName?: string) => Promise<void>;
+  joinRoom: (code: string, name: string, avatar: AvatarKind) => void;
   startGame: (
     categories: string[],
     totalRounds: number,
@@ -74,6 +81,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [isHost, setIsHost] = useState(false);
+  const [myAvatar, setMyAvatar] = useState<AvatarKind>("fox");
   const [players, setPlayers] = useState<PlayerPublic[]>([]);
   const [settings, setSettings] = useState<RoomSettings | null>(null);
 
@@ -94,6 +102,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [revealAnswer, setRevealAnswer] = useState<string | null>(null);
   const [revealResults, setRevealResults] = useState<RoundResult[]>([]);
   const [ranking, setRanking] = useState<RankEntry[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   // URL opaca do vídeo pré-buscada durante o palpite (não exposta no contexto público)
   const [prefetchVideoUrl, setPrefetchVideoUrl] = useState<string | null>(null);
@@ -109,6 +118,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       case "game_starting":
         setTotalRounds(msg.total_rounds);
         setRanking([]);
+        setChatMessages([]);
         setPhase("starting");
         break;
       case "question_start":
@@ -125,6 +135,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setRevealAnswer(null);
         setRevealResults([]);
         setPaused(false);
+        setChatMessages([]);
         // pré-busca o vídeo do reveal (URL opaca) já durante o palpite, sem bloquear
         setPrefetchVideoUrl(msg.prefetch_url ? `${API}${msg.prefetch_url}` : null);
         setPhase("question");
@@ -160,6 +171,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       case "round_resumed":
         setPaused(false);
         break;
+      case "chat_message":
+        setChatMessages((prev) => {
+          const next = [...prev, msg];
+          return next.length > MAX_CHAT_MESSAGES ? next.slice(-MAX_CHAT_MESSAGES) : next;
+        });
+        break;
       case "error":
         setError(msg.message);
         break;
@@ -169,12 +186,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const { status, connect, send } = useWebSocket(handleMessage);
 
   const createRoom = useCallback(
-    async (name: string) => {
+    async (name: string, avatar: AvatarKind, roomName?: string) => {
       setError(null);
+      setMyAvatar(avatar);
       const res = await fetch(`${API}/rooms`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ host_name: name }),
+        body: JSON.stringify({ host_name: name, room_name: roomName || null }),
       });
       if (!res.ok) {
         setError("Não foi possível criar a sala.");
@@ -184,19 +202,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setIsHost(true);
       setCode(data.code);
       connect(
-        `${WS}/ws/${data.code}?name=${encodeURIComponent(name)}&player_id=${data.host_id}`,
+        `${WS}/ws/${data.code}?name=${encodeURIComponent(name)}&player_id=${data.host_id}&avatar=${avatar}`,
       );
     },
     [connect],
   );
 
   const joinRoom = useCallback(
-    (roomCode: string, name: string) => {
+    (roomCode: string, name: string, avatar: AvatarKind) => {
       setError(null);
       setIsHost(false);
+      setMyAvatar(avatar);
       const c = roomCode.trim().toUpperCase();
       setCode(c);
-      connect(`${WS}/ws/${c}?name=${encodeURIComponent(name)}`);
+      connect(`${WS}/ws/${c}?name=${encodeURIComponent(name)}&avatar=${avatar}`);
     },
     [connect],
   );
@@ -243,17 +262,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<GameState>(
     () => ({
-      phase, status, error, code, isHost, players, settings,
+      phase, status, error, code, isHost, myAvatar, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, paused, autocompleteEnabled,
-      revealAnswer, revealResults, ranking,
+      revealAnswer, revealResults, ranking, chatMessages,
       createRoom, joinRoom, startGame, submitAnswer, pauseRound, resumeRound, backToLobby,
     }),
     [
-      phase, status, error, code, isHost, players, settings,
+      phase, status, error, code, isHost, myAvatar, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, paused, autocompleteEnabled,
-      revealAnswer, revealResults, ranking,
+      revealAnswer, revealResults, ranking, chatMessages,
       createRoom, joinRoom, startGame, submitAnswer, pauseRound, resumeRound, backToLobby,
     ],
   );

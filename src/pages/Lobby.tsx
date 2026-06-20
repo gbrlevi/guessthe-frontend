@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Avatar } from "../components/Avatar";
 import { CatIcon } from "../components/CatIcon";
 import { EyesIcon, GridIcon } from "../components/icons";
-import { avatarFor } from "../constants/avatars";
+import type { AvatarKind } from "../constants/avatars";
 import { getCategoryMeta } from "../constants/categoryMeta";
 import { useGame } from "../context/GameContext";
 import styles from "./Lobby.module.css";
@@ -79,7 +79,7 @@ export function Lobby() {
             {players.map((p) => (
               <div key={p.id} className={styles.playerChip}>
                 <div className={styles.playerAvatar}>
-                  <Avatar kind={avatarFor(p.id)} />
+                  <Avatar kind={(p.avatar as AvatarKind) || "fox"} />
                 </div>
                 {p.name}
                 {p.is_host && <span className={styles.hostTag}>host</span>}
