@@ -13,6 +13,7 @@ import type {
   PlayerPublic,
   RankEntry,
   RoomSettings,
+  RoundResult,
   ServerMessage,
 } from "../types/messages";
 
@@ -45,6 +46,7 @@ interface GameState {
   autocompleteEnabled: boolean;
 
   revealAnswer: string | null;
+  revealResults: RoundResult[];
   ranking: RankEntry[];
 
   createRoom: (name: string) => Promise<void>;
@@ -90,6 +92,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [autocompleteEnabled, setAutocompleteEnabled] = useState(true);
 
   const [revealAnswer, setRevealAnswer] = useState<string | null>(null);
+  const [revealResults, setRevealResults] = useState<RoundResult[]>([]);
   const [ranking, setRanking] = useState<RankEntry[]>([]);
 
   // URL opaca do vídeo pré-buscada durante o palpite (não exposta no contexto público)
@@ -120,6 +123,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setSubmitting(false);
         setAnswerResult(null);
         setRevealAnswer(null);
+        setRevealResults([]);
         setPaused(false);
         // pré-busca o vídeo do reveal (URL opaca) já durante o palpite, sem bloquear
         setPrefetchVideoUrl(msg.prefetch_url ? `${API}${msg.prefetch_url}` : null);
@@ -136,6 +140,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         break;
       case "reveal_answer":
         setRevealAnswer(msg.answer);
+        setRevealResults(msg.results);
         setMedia(msg.media);
         // o VideoReveal assume com a MESMA URL (já em cache) → toca instantâneo
         setPrefetchVideoUrl(null);
@@ -241,14 +246,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       phase, status, error, code, isHost, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, paused, autocompleteEnabled,
-      revealAnswer, ranking,
+      revealAnswer, revealResults, ranking,
       createRoom, joinRoom, startGame, submitAnswer, pauseRound, resumeRound, backToLobby,
     }),
     [
       phase, status, error, code, isHost, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, paused, autocompleteEnabled,
-      revealAnswer, ranking,
+      revealAnswer, revealResults, ranking,
       createRoom, joinRoom, startGame, submitAnswer, pauseRound, resumeRound, backToLobby,
     ],
   );

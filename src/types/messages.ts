@@ -33,6 +33,13 @@ export interface RankEntry {
   score: number;
 }
 
+export interface RoundResult {
+  id: string;
+  name: string;
+  correct: boolean;
+  score: number;
+}
+
 // ---- Mensagens servidor -> cliente ----
 
 export interface LobbyUpdate {
@@ -85,7 +92,7 @@ export interface RevealAnswer {
   type: "reveal_answer";
   answer: string;
   media: MediaPayload;
-  results: { id: string; name: string; correct: boolean; score: number }[];
+  results: RoundResult[];
 }
 
 export interface Scoreboard {
