@@ -1,7 +1,9 @@
+import { BackgroundDecals } from "./components/BackgroundDecals";
 import { GameProvider, useGame } from "./context/GameContext";
 import { Game } from "./pages/Game";
 import { Home } from "./pages/Home";
 import { Lobby } from "./pages/Lobby";
+import styles from "./App.module.css";
 
 /**
  * Rendering dirigido pela FASE — a fonte da verdade é o servidor (WebSocket).
@@ -17,7 +19,8 @@ function Screen() {
 export default function App() {
   return (
     <GameProvider>
-      <div className="app">
+      <div className={styles.shell}>
+        <BackgroundDecals />
         <Screen />
       </div>
     </GameProvider>
