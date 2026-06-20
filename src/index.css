@@ -1,344 +1,170 @@
+/* ===========================================================================
+   LDKQuiz — estilos globais (Cartoon Neubrutalism)
+   Tokens, reset, fundo, scrollbar e TODOS os @keyframes do novo_design.
+   Estilos de componente vivem em arquivos *.module.css.
+   =========================================================================== */
+
 :root {
-  --bg: #0f1020;
-  --panel: #1b1d35;
-  --accent: #6c5ce7;
-  --accent-2: #00d2a8;
-  --text: #f5f6fa;
-  --muted: #9aa0c0;
-  --danger: #ff5b6e;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ink: #2a1206; /* marrom profundo — contornos/texto */
+  --bg: #ff7a18; /* laranja de fundo */
+  --gold: #ffc62e;
+  --gold-deep: #f2a600;
+  --pink: #d6266f;
+  --red: #ff5436;
+  --green: #3fbf63;
+  --light-orange: #ff9e45;
+  --cream: #fff1e0;
+
+  /* Nomes de @keyframes expostos como custom properties. Os módulos CSS
+     referenciam via var(--kf-*) para evitar que o CSS Modules "escope" o nome
+     da animação (os @keyframes são globais, definidos abaixo). */
+  --kf-pulse: ldk-pulse;
+  --kf-pop: ldk-pop;
+  --kf-wave: ldk-wave;
+  --kf-fall: ldk-fall;
+  --kf-float: ldk-float;
+  --kf-bob: ldk-bob;
+  --kf-rise: ldk-rise;
+  --kf-wobble: ldk-wobble;
+  --kf-drift: ldk-drift;
+  --kf-spin: ldk-spin;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  padding: 0;
 }
 
-.app {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 24px 16px;
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.13) 2px, transparent 2.6px),
+    radial-gradient(circle, rgba(42, 18, 6, 0.07) 2px, transparent 2.6px);
+  background-size: 40px 40px, 40px 40px;
+  background-position: 0 0, 20px 20px;
+  color: var(--ink);
+  font-family: Nunito, sans-serif;
+}
+
+#root {
   min-height: 100vh;
 }
 
-h1 {
-  margin: 0;
-  font-size: 2.4rem;
-}
-
-.subtitle {
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-button {
-  background: var(--accent);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 18px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
+/* botões/inputs herdam tipografia por padrão (cada módulo estiliza o resto) */
+button,
 input {
-  background: var(--panel);
-  color: var(--text);
-  border: 1px solid #33365e;
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 1rem;
+  font-family: inherit;
 }
 
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 12px 0;
+/* scrollbar custom */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
-
-.error {
-  color: var(--danger);
-}
-
-.hint {
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-/* ---- Home ---- */
-.home-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.join-row {
-  display: flex;
-  gap: 8px;
-}
-
-.join-row input {
-  flex: 1;
-  text-transform: uppercase;
-}
-
-/* ---- Lobby ---- */
-.room-code {
-  font-size: 1.2rem;
-  margin-bottom: 16px;
-}
-
-.room-code strong {
-  letter-spacing: 4px;
-  color: var(--accent-2);
-  font-size: 1.6rem;
-}
-
-.players ul {
-  list-style: none;
-  padding: 0;
-}
-
-.players li {
-  padding: 6px 0;
-}
-
-.host-tag {
-  background: var(--accent);
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-size: 0.7rem;
-  margin-left: 6px;
-}
-
-.categories-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.category-bulk-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-small {
-  padding: 4px 10px;
-  font-size: 0.8rem;
-  border-radius: 6px;
-}
-
-.btn-outline {
+::-webkit-scrollbar-track {
   background: transparent;
-  border: 1px solid var(--accent);
-  color: var(--accent);
 }
-
-.category-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
-}
-
-.category-card {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  background: var(--panel);
-  padding: 10px;
+::-webkit-scrollbar-thumb {
+  background: #2a1206;
   border-radius: 8px;
-  margin: 0;
-  cursor: pointer;
-  transition: outline 0.1s;
 }
 
-.category-card.selected {
-  outline: 2px solid var(--accent-2);
+/* ============================= keyframes ldk-* ============================ */
+@keyframes ldk-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
 }
-
-.cat-icon {
-  font-size: 1.2rem;
-  flex-shrink: 0;
+@keyframes ldk-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  55% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
-
-.cat-label {
-  flex: 1;
-  font-size: 0.85rem;
-  line-height: 1.2;
+@keyframes ldk-wave {
+  0%,
+  100% {
+    transform: scaleY(0.22);
+  }
+  50% {
+    transform: scaleY(1);
+  }
 }
-
-.cat-count {
-  font-size: 0.75rem;
-  color: var(--muted);
-  flex-shrink: 0;
+@keyframes ldk-fall {
+  0% {
+    transform: translateY(-40px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(560px) rotate(620deg);
+    opacity: 0;
+  }
 }
-
-.waiting {
-  color: var(--muted);
-  margin-top: 24px;
+@keyframes ldk-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
 }
-
-/* ---- Game ---- */
-.game-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
+@keyframes ldk-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(3deg);
+  }
 }
-
-.category {
-  color: var(--accent-2);
-  font-weight: 600;
+@keyframes ldk-rise {
+  0% {
+    transform: translateY(26px) scale(0.94);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
-
-.media-hint {
-  text-align: center;
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin: 4px 0 8px;
+@keyframes ldk-wobble {
+  0%,
+  100% {
+    transform: rotate(-1.4deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
+  }
 }
-
-.center {
-  text-align: center;
-  padding-top: 48px;
+@keyframes ldk-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(-6deg);
+  }
+  50% {
+    transform: translate(0, -16px) rotate(6deg);
+  }
 }
-
-.media-area {
-  display: flex;
-  justify-content: center;
-  margin: 16px 0;
-}
-
-.media-frame {
-  width: 320px;
-  height: 320px;
-  background: #000;
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.media-frame.audio {
-  flex-direction: column;
-  gap: 12px;
-  font-size: 3rem;
-}
-
-.media-frame.video {
-  width: auto;
-  max-width: 640px;
-  height: auto;
-}
-
-.media-loading {
-  color: #aaa;
-  font-size: 1rem;
-  padding: 24px;
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
-}
-
-.clues {
-  list-style: none;
-  padding: 0;
-  font-size: 1.3rem;
-  text-align: center;
-}
-
-/* ---- Timer ---- */
-.timer {
-  position: relative;
-  height: 24px;
-  background: var(--panel);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.timer-bar {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent-2), var(--accent));
-  transition: width 1s linear;
-}
-
-.timer-label {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-}
-
-/* ---- Answer ---- */
-.answer-input {
-  display: flex;
-  gap: 8px;
-}
-
-.answer-input input {
-  flex: 1;
-}
-
-.answer-feedback {
-  text-align: center;
-  padding: 12px;
-  border-radius: 8px;
-  background: var(--panel);
-}
-
-.answer-feedback.correct {
-  outline: 2px solid var(--accent-2);
-}
-
-.answer-feedback.wrong {
-  outline: 2px solid var(--danger);
-}
-
-.reveal-answer {
-  text-align: center;
-  font-size: 1.3rem;
-  margin-top: 8px;
-}
-
-/* ---- Scoreboard ---- */
-.scoreboard ol {
-  list-style: none;
-  padding: 0;
-}
-
-.scoreboard li {
-  display: flex;
-  gap: 12px;
-  padding: 8px 12px;
-  background: var(--panel);
-  border-radius: 8px;
-  margin-bottom: 6px;
-}
-
-.rank-name {
-  flex: 1;
-}
-
-.rank-score {
-  color: var(--accent-2);
-  font-weight: 700;
+@keyframes ldk-spin {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
