@@ -1,0 +1,25 @@
+.timer {
+  width: 98px;
+  height: 98px;
+  border-radius: 50%;
+  border: 5px solid #2a1206;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 5px 5px 0 #2a1206;
+}
+.num {
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 38px;
+  color: #ffffff;
+  line-height: 1;
+  text-shadow: 2px 2px 0 rgba(42, 18, 6, 0.4);
+}
+.label {
+  font-weight: 900;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.85);
+}

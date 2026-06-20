@@ -1,0 +1,128 @@
+.bar {
+  position: sticky;
+  bottom: 0;
+  padding: 18px 0 22px;
+  background: linear-gradient(transparent, #ff7a18 32%);
+}
+.inner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  max-width: 760px;
+  margin: 0 auto;
+}
+.autocompleteWrap {
+  position: relative;
+  flex: 1;
+}
+.input {
+  width: 100%;
+  font-family: Nunito, sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  padding: 17px 22px;
+  border-radius: 999px;
+  border: 4px solid #2a1206;
+  background: #ffffff;
+  box-shadow: 5px 5px 0 #2a1206;
+  outline: none;
+  transition: all 0.14s;
+}
+.input:focus {
+  box-shadow: 5px 5px 0 #d6266f;
+}
+.input:disabled {
+  opacity: 0.7;
+}
+.sendBtn {
+  flex: none;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  color: #fff;
+  background: linear-gradient(180deg, #ff7a5c, #ff5436 55%, #e23a1c);
+  border: 4px solid #2a1206;
+  border-radius: 999px;
+  padding: 16px 28px;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 #2a1206;
+  transition: all 0.14s;
+}
+.sendBtn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 5px 7px 0 #2a1206;
+}
+.sendBtn:not(:disabled):active {
+  transform: translate(0, 3px);
+  box-shadow: 2px 2px 0 #2a1206;
+}
+.sendBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* dropdown de autocomplete (acima do input) */
+.dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 4px solid #2a1206;
+  border-radius: 18px;
+  box-shadow: 5px 5px 0 #2a1206;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+}
+.dropdown li {
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.dropdown li:hover {
+  background: #fff3d6;
+}
+
+/* aviso inline "errou, tente novamente" */
+.inlineWrong {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-weight: 900;
+  font-size: 14px;
+  color: #fff;
+  background: linear-gradient(180deg, #ff7a5c, #ff5436);
+  border: 3px solid #2a1206;
+  border-radius: 14px;
+  padding: 9px 14px;
+  box-shadow: 3px 3px 0 #2a1206;
+}
+
+/* feedback quando a resposta está travada (acertou / errou e aguardando) */
+.feedback {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 16px;
+  border-radius: 999px;
+  border: 4px solid #2a1206;
+  box-shadow: 5px 5px 0 #2a1206;
+}
+.correct {
+  background: linear-gradient(180deg, #54d479, #3fbf63);
+  color: #fff;
+}
+.wrong {
+  background: linear-gradient(180deg, #ff7a5c, #ff5436);
+  color: #fff;
+}

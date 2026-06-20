@@ -1,0 +1,96 @@
+/* caixa escura para imagem/vídeo */
+.mediaBox {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  border-radius: 20px;
+  border: 4px solid #2a1206;
+  overflow: hidden;
+  background: #2a1206;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+/* caixa de áudio (equalizer) */
+.waveBox {
+  flex: 1;
+  min-height: 320px;
+  border-radius: 20px;
+  border: 4px solid #2a1206;
+  background: linear-gradient(160deg, #2a1206, #7a2e00);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 22px;
+}
+.waveBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  height: 135px;
+}
+.waveBar {
+  width: 7px;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(#ffc62e, #ff5436);
+  transform-origin: bottom;
+  animation: var(--kf-wave) 0.9s ease-in-out infinite;
+}
+.waveBox audio {
+  width: 100%;
+  max-width: 380px;
+}
+
+.caption {
+  font-family: "Courier New", monospace;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* lista de "plot" (mídia de texto / clues) */
+.plotList {
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  justify-content: center;
+}
+.plotLine {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  background: #fff6ec;
+  border: 3px solid #2a1206;
+  border-radius: 18px;
+  padding: 15px 18px;
+  box-shadow: 4px 4px 0 #2a1206;
+  animation: var(--kf-rise) 0.45s cubic-bezier(0.22, 0.85, 0.3, 1) both;
+}
+.plotNum {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ec5c9b, #d6266f);
+  color: #fff;
+  border: 3px solid #2a1206;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+}
+.plotText {
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1.3;
+}

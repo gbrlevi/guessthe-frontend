@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useGame } from "../context/GameContext";
+import styles from "./AnswerInput.module.css";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -76,32 +77,34 @@ export function AnswerInput() {
   // locked = acertou ou sem retry
   if (answered) {
     return (
-      <div className={`answer-feedback ${answerResult ? "correct" : "wrong"}`}>
-        {answerResult ? "✅ Acertou! Aguardando fim do round…" : "❌ Errou. Aguardando fim do round…"}
+      <div className={styles.bar}>
+        <div className={`${styles.feedback} ${answerResult ? styles.correct : styles.wrong}`}>
+          {answerResult ? "✅ Acertou! Aguardando fim do round…" : "❌ Errou. Aguardando fim do round…"}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="answer-wrapper" ref={wrapperRef}>
-      {answerResult === false && (
-        <div className="answer-feedback wrong inline">❌ Errou! Tente novamente.</div>
-      )}
-
-      <form className="answer-input" onSubmit={onSubmit}>
-        <div className="autocomplete-wrap">
+    <form className={styles.bar} onSubmit={onSubmit}>
+      <div className={styles.inner}>
+        <div className={styles.autocompleteWrap} ref={wrapperRef}>
+          {answerResult === false && !showSuggestions && (
+            <div className={styles.inlineWrong}>❌ Errou! Tente novamente.</div>
+          )}
           <input
+            className={styles.input}
             autoFocus
             value={guess}
             onChange={(e) => setGuess(e.target.value)}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-            placeholder="Seu palpite…"
+            placeholder="Digite seu palpite e aperte Enter…"
             maxLength={60}
             disabled={submitting}
             autoComplete="off"
           />
           {showSuggestions && (
-            <ul className="autocomplete-list">
+            <ul className={styles.dropdown}>
               {suggestions.map((s) => (
                 <li key={s} onMouseDown={() => pickSuggestion(s)}>
                   {s}
@@ -110,10 +113,10 @@ export function AnswerInput() {
             </ul>
           )}
         </div>
-        <button type="submit" disabled={submitting}>
-          {submitting ? "…" : "Responder"}
+        <button className={styles.sendBtn} type="submit" disabled={submitting}>
+          {submitting ? "…" : "Enviar ➤"}
         </button>
-      </form>
-    </div>
+      </div>
+    </form>
   );
 }
