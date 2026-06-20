@@ -1,0 +1,415 @@
+.screen {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding: 34px 28px 44px;
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 1040px;
+  background: #ffffff;
+  border: 5px solid #2a1206;
+  border-radius: 36px;
+  box-shadow: 10px 10px 0 #2a1206;
+  padding: 30px 34px 38px;
+  animation: var(--kf-rise) 0.5s cubic-bezier(0.22, 0.85, 0.3, 1) both;
+}
+
+/* ribbon */
+.ribbon {
+  display: flex;
+  justify-content: center;
+  margin: -56px 0 22px;
+}
+.ribbonWrap {
+  position: relative;
+  display: inline-flex;
+}
+.ribbonCorner {
+  position: absolute;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  background: #a81b57;
+  border: 3px solid #2a1206;
+  transform: translateY(-50%) rotate(45deg);
+  border-radius: 7px;
+  z-index: 0;
+}
+.ribbonCornerLeft {
+  left: -14px;
+}
+.ribbonCornerRight {
+  right: -14px;
+}
+.ribbonInner {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, #ec5c9b, #d6266f);
+  border: 4px solid #2a1206;
+  border-radius: 18px;
+  padding: 11px 34px;
+  box-shadow: 5px 5px 0 #2a1206;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  color: #ffc62e;
+  text-shadow: 2px 2px 0 #2a1206;
+  letter-spacing: 1px;
+  animation: var(--kf-wobble) 4s ease-in-out infinite;
+}
+
+/* code chip */
+.codeRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+.codeChip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(180deg, #ffd96b, #ffc62e 55%, #f2a600);
+  border: 4px solid #2a1206;
+  border-radius: 20px;
+  padding: 12px 30px;
+  box-shadow: 5px 5px 0 #2a1206;
+}
+.codeLabel {
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #8a5a07;
+}
+.codeValue {
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: 6px;
+  color: #2a1206;
+  line-height: 1.1;
+}
+
+.section {
+  margin-top: 24px;
+}
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0 0 12px;
+}
+
+/* players */
+.playerList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.playerChip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: #fff6ec;
+  border: 3px solid #2a1206;
+  border-radius: 14px;
+  padding: 7px 12px;
+  box-shadow: 3px 3px 0 #2a1206;
+  font-weight: 800;
+  font-size: 14px;
+}
+.playerAvatar {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+.hostTag {
+  font-weight: 900;
+  font-size: 10px;
+  text-transform: uppercase;
+  background: #d6266f;
+  color: #fff;
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+
+/* categories */
+.catHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 24px 0 12px;
+}
+.bulkActions {
+  display: flex;
+  gap: 8px;
+}
+.smallBtn {
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  color: #2a1206;
+  background: #fff6ec;
+  border: 3px solid #2a1206;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #2a1206;
+  transition: all 0.14s;
+}
+.smallBtn:hover {
+  transform: translateY(-2px);
+}
+.smallBtn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #2a1206;
+}
+
+.catGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+.catCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 3px solid #2a1206;
+  border-radius: 18px;
+  padding: 12px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #2a1206;
+  transition: all 0.14s;
+  text-align: center;
+}
+.catCard:hover {
+  transform: translateY(-3px);
+}
+.catCard:active {
+  transform: translate(0, 2px);
+  box-shadow: 2px 2px 0 #2a1206;
+}
+.catCardSelected {
+  background: #fff3d6;
+  border-color: #d6266f;
+  box-shadow: 4px 4px 0 #d6266f;
+}
+.catCardIcon {
+  width: 48px;
+  height: 48px;
+}
+.catCardLabel {
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1.15;
+}
+.catCardCount {
+  font-weight: 900;
+  font-size: 11px;
+  color: #a06a3c;
+}
+.emptyCats {
+  font-weight: 800;
+  color: #a06a3c;
+}
+
+/* actions */
+.actionsRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.rounds {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 900;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #8a5a2e;
+  margin: 0;
+}
+.roundsInput {
+  width: 80px;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 4px solid #2a1206;
+  background: #fff6ec;
+  text-align: center;
+  outline: none;
+}
+.configBtn {
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #2a1206;
+  background: #fff6ec;
+  border: 3px solid #2a1206;
+  border-radius: 14px;
+  padding: 10px 16px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #2a1206;
+  transition: all 0.14s;
+}
+.configBtn:hover {
+  transform: translateY(-2px);
+}
+.configBtn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #2a1206;
+}
+
+.startBtn {
+  width: 100%;
+  margin-top: 18px;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 23px;
+  color: #2a1206;
+  background: linear-gradient(180deg, #ffd96b, #ffc62e 55%, #f2a600);
+  border: 4px solid #2a1206;
+  border-radius: 22px;
+  padding: 16px;
+  cursor: pointer;
+  box-shadow: 6px 6px 0 #2a1206;
+  transition: all 0.15s;
+}
+.startBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 6px 9px 0 #2a1206;
+}
+.startBtn:active {
+  transform: translate(0, 3px);
+  box-shadow: 2px 2px 0 #2a1206;
+}
+
+.hint {
+  font-weight: 800;
+  font-size: 13px;
+  color: #a06a3c;
+  margin: 10px 0 0;
+  text-align: center;
+}
+.waiting {
+  text-align: center;
+  font-family: Fredoka, sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  color: #a06a3c;
+  padding: 26px 12px;
+}
+.error {
+  margin: 14px 0 0;
+  font-weight: 800;
+  color: #c0241c;
+  background: #ffe3dc;
+  border: 3px solid #ff5436;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+/* config modal */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(42, 18, 6, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+.modal {
+  width: 100%;
+  max-width: 470px;
+  background: #ffffff;
+  border: 5px solid #2a1206;
+  border-radius: 28px;
+  box-shadow: 10px 10px 0 #2a1206;
+  padding: 26px;
+  animation: var(--kf-rise) 0.35s cubic-bezier(0.22, 0.85, 0.3, 1) both;
+}
+.modalTitle {
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  margin: 0 0 8px;
+}
+.configRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 2px dashed #e7cdb0;
+}
+.configRow span {
+  font-weight: 800;
+  font-size: 15px;
+}
+.configSmall {
+  display: block;
+  font-weight: 700;
+  font-size: 12px;
+  color: #a06a3c;
+  margin-top: 2px;
+}
+.configInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.configValue {
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+  min-width: 44px;
+  text-align: right;
+}
+.modal input[type="range"] {
+  accent-color: #d6266f;
+}
+.modal input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  accent-color: #d6266f;
+  flex: none;
+}
+.modalClose {
+  width: 100%;
+  margin-top: 18px;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: #fff;
+  background: linear-gradient(180deg, #ff7a5c, #ff5436 55%, #e23a1c);
+  border: 4px solid #2a1206;
+  border-radius: 18px;
+  padding: 13px;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 #2a1206;
+  transition: all 0.14s;
+}
+.modalClose:hover {
+  transform: translateY(-2px);
+  box-shadow: 5px 7px 0 #2a1206;
+}
+.modalClose:active {
+  transform: translate(0, 3px);
+  box-shadow: 2px 2px 0 #2a1206;
+}

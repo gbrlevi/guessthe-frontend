@@ -1,0 +1,398 @@
+.screen {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding: 34px 28px 44px;
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 1140px;
+  background: #ffffff;
+  border: 5px solid #2a1206;
+  border-radius: 36px;
+  box-shadow: 10px 10px 0 #2a1206;
+  padding: 30px 34px 38px;
+  animation: var(--kf-rise) 0.5s cubic-bezier(0.22, 0.85, 0.3, 1) both;
+}
+
+/* ribbon */
+.ribbon {
+  display: flex;
+  justify-content: center;
+  margin: -58px 0 24px;
+}
+.ribbonWrap {
+  position: relative;
+  display: inline-flex;
+}
+.ribbonCorner {
+  position: absolute;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  background: #a81b57;
+  border: 3px solid #2a1206;
+  transform: translateY(-50%) rotate(45deg);
+  border-radius: 7px;
+  z-index: 0;
+}
+.ribbonCornerLeft {
+  left: -15px;
+}
+.ribbonCornerRight {
+  right: -15px;
+}
+.ribbonInner {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, #ec5c9b, #d6266f);
+  border: 4px solid #2a1206;
+  border-radius: 18px;
+  padding: 12px 40px;
+  box-shadow: 5px 5px 0 #2a1206;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 30px;
+  color: #ffc62e;
+  text-shadow: 2px 2px 0 #2a1206;
+  letter-spacing: 1px;
+  animation: var(--kf-wobble) 4s ease-in-out infinite;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 36px;
+  align-items: start;
+}
+
+/* identity */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(180deg, #ffd96b, #ffc62e 55%, #f2a600);
+  border: 3px solid #2a1206;
+  border-radius: 999px;
+  padding: 6px 16px;
+  font-weight: 900;
+  font-size: 13px;
+  box-shadow: 3px 3px 0 #2a1206;
+}
+.title {
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1.04;
+  margin: 16px 0 4px;
+}
+.subtitle {
+  font-weight: 800;
+  color: #a06a3c;
+  margin: 0 0 22px;
+  font-size: 15px;
+}
+
+.carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+.arrowBtn {
+  width: 54px;
+  height: 54px;
+  flex: none;
+  border-radius: 18px;
+  border: 4px solid #2a1206;
+  background: linear-gradient(180deg, #fff, #ffe6cc);
+  cursor: pointer;
+  font-size: 26px;
+  font-weight: 900;
+  color: #2a1206;
+  box-shadow: 3px 3px 0 #2a1206;
+  transition: all 0.15s;
+}
+.arrowBtn:hover {
+  transform: translateY(-2px);
+}
+.arrowBtn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #2a1206;
+}
+.avatarWrap {
+  position: relative;
+}
+.avatarBox {
+  width: 132px;
+  height: 132px;
+  filter: drop-shadow(6px 6px 0 #2a1206);
+  animation: var(--kf-bob) 3.2s ease-in-out infinite;
+}
+.editIcon {
+  position: absolute;
+  top: 6px;
+  right: 2px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ff7a5c, #ff5436);
+  border: 3px solid #2a1206;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0 #2a1206;
+}
+
+.nickLabel {
+  display: block;
+  font-weight: 900;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #8a5a2e;
+  margin-bottom: 7px;
+}
+.nickInput {
+  width: 100%;
+  font-family: Nunito, sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  padding: 15px 18px;
+  border-radius: 18px;
+  border: 4px solid #2a1206;
+  background: #fff6ec;
+  box-shadow: inset 3px 3px 0 rgba(42, 18, 6, 0.08);
+  outline: none;
+  margin-bottom: 20px;
+  transition: all 0.15s;
+}
+.nickInput:focus {
+  background: #ffffff;
+  box-shadow: inset 3px 3px 0 rgba(214, 38, 111, 0.18);
+}
+
+.primaryBtn {
+  width: 100%;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 23px;
+  color: #2a1206;
+  background: linear-gradient(180deg, #ffd96b, #ffc62e 55%, #f2a600);
+  border: 4px solid #2a1206;
+  border-radius: 22px;
+  padding: 16px;
+  cursor: pointer;
+  box-shadow: 6px 6px 0 #2a1206;
+  transition: all 0.15s;
+}
+.primaryBtn:not(:disabled):hover {
+  transform: translateY(-3px);
+  box-shadow: 6px 9px 0 #2a1206;
+}
+.primaryBtn:not(:disabled):active {
+  transform: translate(0, 3px);
+  box-shadow: 2px 2px 0 #2a1206;
+}
+.primaryBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
+  color: #a06a3c;
+  font-weight: 800;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  border-top: 2px dashed #e7cdb0;
+}
+
+.joinRow {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+.codeInput {
+  flex: 1;
+  min-width: 0;
+  font-family: Nunito, sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 13px 16px;
+  border-radius: 16px;
+  border: 4px solid #2a1206;
+  background: #fff6ec;
+  box-shadow: inset 3px 3px 0 rgba(42, 18, 6, 0.08);
+  outline: none;
+  transition: all 0.15s;
+}
+.codeInput:focus {
+  background: #ffffff;
+  box-shadow: inset 3px 3px 0 rgba(214, 38, 111, 0.18);
+}
+.joinBtn {
+  flex: none;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+  background: linear-gradient(180deg, #ff7a5c, #ff5436 55%, #e23a1c);
+  border: 4px solid #2a1206;
+  border-radius: 16px;
+  padding: 0 22px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 #2a1206;
+  transition: all 0.14s;
+}
+.joinBtn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 6px 0 #2a1206;
+}
+.joinBtn:not(:disabled):active {
+  transform: translate(0, 3px);
+  box-shadow: 2px 2px 0 #2a1206;
+}
+.joinBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 14px 0 0;
+  font-weight: 800;
+  color: #c0241c;
+  background: #ffe3dc;
+  border: 3px solid #ff5436;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+/* rooms (estático/decorativo) */
+.roomsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.roomsTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 25px;
+  margin: 0;
+}
+.liveBadge {
+  font-weight: 900;
+  font-size: 13px;
+  color: #fff;
+  background: linear-gradient(180deg, #54d479, #3fbf63);
+  border: 3px solid #2a1206;
+  border-radius: 999px;
+  padding: 5px 13px;
+  box-shadow: 2px 2px 0 #2a1206;
+}
+.roomsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.roomCard {
+  background: #ffffff;
+  border: 4px solid #2a1206;
+  border-radius: 24px;
+  padding: 18px;
+  box-shadow: 5px 5px 0 #2a1206;
+  transition: all 0.16s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: var(--kf-rise) 0.5s cubic-bezier(0.22, 0.85, 0.3, 1) both;
+}
+.roomCard:hover {
+  transform: translateY(-5px) rotate(-1deg);
+  box-shadow: 5px 10px 0 #2a1206;
+}
+.roomIconWrap {
+  position: relative;
+}
+.roomIcon {
+  width: 72px;
+  height: 72px;
+  filter: drop-shadow(3px 3px 0 #2a1206);
+}
+.roomBadge {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 900;
+  font-size: 11px;
+  background: #2a1206;
+  color: #ffc62e;
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+.roomMeta {
+  text-align: center;
+  margin-top: 4px;
+}
+.roomName {
+  font-family: Fredoka, sans-serif;
+  font-weight: 600;
+  font-size: 18px;
+  line-height: 1.1;
+}
+.roomCat {
+  font-weight: 800;
+  font-size: 12px;
+  color: #a06a3c;
+  margin-top: 2px;
+}
+.roomFooter {
+  display: flex;
+  gap: 12px;
+  font-weight: 900;
+  font-size: 12px;
+  color: #8a5a2e;
+  border-top: 2px dashed #e7cdb0;
+  padding-top: 9px;
+  width: 100%;
+  justify-content: center;
+}
+.roomFooter span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (max-width: 880px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .title {
+    font-size: 34px;
+  }
+}

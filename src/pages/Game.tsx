@@ -1,114 +1,194 @@
 import { AnswerInput } from "../components/AnswerInput";
-import { AudioReveal } from "../components/AudioReveal";
-import { PixelImage } from "../components/PixelImage";
+import { CatIcon } from "../components/CatIcon";
+import { Confetti } from "../components/Confetti";
+import { GuessFeed } from "../components/GuessFeed";
+import { Leaderboard } from "../components/Leaderboard";
+import { MediaArea } from "../components/MediaArea";
 import { Scoreboard } from "../components/Scoreboard";
+import { ScorerList } from "../components/ScorerList";
 import { Timer } from "../components/Timer";
-import { VideoReveal } from "../components/VideoReveal";
+import { CheckIcon, SparkleIcon } from "../components/icons";
 import { getCategoryMeta } from "../constants/categoryMeta";
 import { useGame } from "../context/GameContext";
-import type { MediaPayload } from "../types/messages";
-
-function MediaView({ media, revealed }: { media: MediaPayload | null; revealed: boolean }) {
-  if (!media) return null;
-  if (media.kind === "image" && media.url)
-    return <PixelImage src={media.url} revealed={revealed} />;
-  if (media.kind === "audio" && media.url)
-    return <AudioReveal src={media.url} />;
-  if (media.kind === "video" && media.url)
-    return <VideoReveal src={media.url} />;
-  if (media.kind === "text") {
-    return (
-      <ul className="clues">
-        {(media.clues ?? []).map((c, i) => (
-          <li key={i}>{c}</li>
-        ))}
-      </ul>
-    );
-  }
-  return null;
-}
+import styles from "./Game.module.css";
 
 export function Game() {
   const {
-    phase, round, totalRounds, category, media, timeLeft, duration,
-    revealAnswer, ranking, isHost, backToLobby, paused, pauseRound, resumeRound,
+    phase,
+    round,
+    totalRounds,
+    category,
+    media,
+    timeLeft,
+    revealAnswer,
+    revealResults,
+    ranking,
+    players,
+    isHost,
+    backToLobby,
+    paused,
+    pauseRound,
+    resumeRound,
   } = useGame();
 
   const meta = getCategoryMeta(category);
 
   if (phase === "starting") {
-    return <div className="game center">A partida vai começar…</div>;
+    return (
+      <div className={styles.center}>
+        <div className={styles.startingCard}>
+          <span className={styles.startingEmoji}>🎬</span>
+          A partida vai começar…
+        </div>
+      </div>
+    );
   }
 
   if (phase === "scoreboard") {
     return (
-      <div className="game center">
+      <div className={styles.center}>
         <Scoreboard ranking={ranking} title={`Placar — round ${round}/${totalRounds}`} />
-        <p className="hint">Próximo round em instantes…</p>
+        <div className={styles.nextChip}>Próximo round em instantes…</div>
       </div>
     );
   }
 
   if (phase === "game_over") {
     return (
-      <div className="game center">
+      <div className={styles.center}>
+        <Confetti />
         <Scoreboard ranking={ranking} title="🏆 Fim de jogo!" />
-        {isHost && <button onClick={backToLobby}>Voltar ao lobby</button>}
+        {isHost && (
+          <button className={styles.backBtn} onClick={backToLobby}>
+            Voltar ao lobby
+          </button>
+        )}
       </div>
     );
   }
 
-  // phase === "question" | "reveal"
-  const revealed = phase === "reveal";
+  if (phase === "reveal") {
+    const scorers = revealResults.filter((r) => r.score > 0).sort((a, b) => b.score - a.score);
+    return (
+      <div className={styles.reveal}>
+        <Confetti />
+        <div className={styles.revealInner}>
+          <div className={styles.revealBadgeWrap}>
+            <span className={`${styles.revealBadgeCorner} ${styles.revealBadgeCornerLeft}`} />
+            <span className={`${styles.revealBadgeCorner} ${styles.revealBadgeCornerRight}`} />
+            <div className={styles.revealBadgeInner}>
+              <CheckIcon size={26} />
+              <span>RESPOSTA REVELADA!</span>
+            </div>
+          </div>
+
+          <div className={styles.revealGrid}>
+            <div className={styles.answerCard}>
+              <div className={styles.answerMedia}>
+                <MediaArea media={media} revealed={true} />
+              </div>
+              <div className={styles.answerInfo}>
+                <div className={styles.answerLabel}>A resposta certa era</div>
+                <div className={styles.answerText}>{revealAnswer}</div>
+                <div className={styles.answerCat}>
+                  <div className={styles.answerCatIcon}>
+                    <CatIcon kind={meta.iconKind} />
+                  </div>
+                  {meta.label}
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.scorersCard}>
+              <div className={styles.scorersTitle}>
+                <SparkleIcon size={24} />
+                Quem pontuou
+              </div>
+              <div className={styles.scorersBody}>
+                {scorers.length > 0 ? (
+                  <ScorerList entries={scorers} />
+                ) : (
+                  <div className={styles.emptyScorers}>Ninguém pontuou desta vez 😅</div>
+                )}
+              </div>
+              <div className={styles.nextChip}>Próximo round em instantes…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // phase === "question" → Arena
   return (
-    <div className="game">
+    <div className={styles.arena}>
       {paused && (
-        <div className="paused-overlay">
+        <div className={styles.pausedOverlay}>
           ⏸ Partida pausada
           {isHost && (
-            <button className="btn-resume" onClick={resumeRound}>
+            <button className={styles.resumeBtn} onClick={resumeRound}>
               Retomar
             </button>
           )}
         </div>
       )}
 
-      <header className="game-header">
-        <span className="category">
-          {meta.icon} {meta.label}
-        </span>
-        <span className="round">
-          {round}/{totalRounds}
-        </span>
-        {isHost && !revealed && (
-          <button
-            className="btn-pause"
-            onClick={paused ? resumeRound : pauseRound}
-            title={paused ? "Retomar" : "Pausar"}
-          >
-            {paused ? "▶" : "⏸"}
-          </button>
-        )}
-      </header>
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
+          <div className={styles.roundBadge}>
+            <div className={styles.roundLabel}>Rodada</div>
+            <div className={styles.roundValue}>
+              {round}
+              <span className={styles.roundTotal}>/{totalRounds}</span>
+            </div>
+          </div>
+          <div className={styles.catBox}>
+            <div className={styles.catBoxIcon}>
+              <CatIcon kind={meta.iconKind} frame="#FFF1E0" />
+            </div>
+            <div>
+              <div className={styles.catBoxKicker}>Categoria</div>
+              <div className={styles.catBoxName}>{meta.label}</div>
+            </div>
+          </div>
+        </div>
 
-      {!revealed && (
-        <>
-          <Timer timeLeft={timeLeft} duration={duration} paused={paused} />
-          <p className="media-hint">{meta.mediaHint}</p>
-        </>
-      )}
+        <div className={styles.headerCenter}>
+          <Timer timeLeft={timeLeft} paused={paused} />
+        </div>
 
-      <div className="media-area">
-        <MediaView media={media} revealed={revealed} />
+        <div className={styles.headerRight}>
+          {isHost && (
+            <button
+              className={styles.pauseBtn}
+              onClick={paused ? resumeRound : pauseRound}
+              title={paused ? "Retomar" : "Pausar"}
+            >
+              {paused ? "▶" : "⏸"}
+            </button>
+          )}
+        </div>
       </div>
 
-      {revealed ? (
-        <div className="reveal-answer">
-          Resposta: <strong>{revealAnswer}</strong>
+      <div className={styles.main}>
+        <div className={styles.mediaCard}>
+          <div className={styles.mediaHeader}>
+            <div className={styles.mediaHint}>{meta.mediaHint}</div>
+            <div className={styles.liveBadge}>
+              <span className={styles.liveDot} />
+              AO VIVO
+            </div>
+          </div>
+          <MediaArea media={media} revealed={false} />
         </div>
-      ) : (
-        !paused && <AnswerInput />
-      )}
+
+        <div className={styles.sidebar}>
+          <Leaderboard players={players} />
+          <GuessFeed />
+        </div>
+      </div>
+
+      {!paused && <AnswerInput />}
     </div>
   );
 }

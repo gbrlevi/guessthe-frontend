@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
+import { Avatar } from "../components/Avatar";
+import { CatIcon } from "../components/CatIcon";
+import { EyesIcon, GridIcon } from "../components/icons";
+import { avatarFor } from "../constants/avatars";
 import { getCategoryMeta } from "../constants/categoryMeta";
 import { useGame } from "../context/GameContext";
+import styles from "./Lobby.module.css";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -39,9 +44,7 @@ export function Lobby() {
   }, []);
 
   const toggle = (c: string) =>
-    setSelected((prev) =>
-      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
-    );
+    setSelected((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
 
   const selectAll = () => setSelected(categories.map((c) => c.category));
   const clearAll = () => setSelected([]);
@@ -50,100 +53,120 @@ export function Lobby() {
     setConfig((prev) => ({ ...prev, [key]: value }));
 
   return (
-    <div className="lobby">
-      <div className="room-code">
-        Código da sala: <strong>{code}</strong>
-      </div>
+    <div className={styles.screen}>
+      <div className={styles.card}>
+        <div className={styles.ribbon}>
+          <div className={styles.ribbonWrap}>
+            <span className={`${styles.ribbonCorner} ${styles.ribbonCornerLeft}`} />
+            <span className={`${styles.ribbonCorner} ${styles.ribbonCornerRight}`} />
+            <div className={styles.ribbonInner}>LOBBY</div>
+          </div>
+        </div>
 
-      <div className="players">
-        <h3>Jogadores ({players.length})</h3>
-        <ul>
-          {players.map((p) => (
-            <li key={p.id}>
-              {p.name} {p.is_host && <span className="host-tag">host</span>}
-            </li>
-          ))}
-        </ul>
-      </div>
+        <div className={styles.codeRow}>
+          <div className={styles.codeChip}>
+            <span className={styles.codeLabel}>Código da sala</span>
+            <span className={styles.codeValue}>{code}</span>
+          </div>
+        </div>
 
-      {isHost ? (
-        <div className="host-controls">
-          <div className="categories-header">
-            <h3>Categorias</h3>
-            <div className="category-bulk-actions">
-              <button className="btn-small" onClick={selectAll}>
-                Todas
-              </button>
-              <button className="btn-small btn-outline" onClick={clearAll}>
-                Nenhuma
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>
+            <EyesIcon size={20} />
+            Jogadores ({players.length})
+          </h3>
+          <div className={styles.playerList}>
+            {players.map((p) => (
+              <div key={p.id} className={styles.playerChip}>
+                <div className={styles.playerAvatar}>
+                  <Avatar kind={avatarFor(p.id)} />
+                </div>
+                {p.name}
+                {p.is_host && <span className={styles.hostTag}>host</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {isHost ? (
+          <>
+            <div className={styles.catHeader}>
+              <h3 className={styles.sectionTitle}>
+                <GridIcon size={20} />
+                Categorias
+              </h3>
+              <div className={styles.bulkActions}>
+                <button className={styles.smallBtn} onClick={selectAll}>
+                  Todas
+                </button>
+                <button className={styles.smallBtn} onClick={clearAll}>
+                  Nenhuma
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.catGrid}>
+              {categories.length === 0 && (
+                <p className={styles.emptyCats}>Nenhuma categoria no banco — rode os seeders.</p>
+              )}
+              {categories.map((c) => {
+                const meta = getCategoryMeta(c.category);
+                const isSelected = selected.includes(c.category);
+                return (
+                  <button
+                    key={c.category}
+                    type="button"
+                    className={`${styles.catCard} ${isSelected ? styles.catCardSelected : ""}`}
+                    onClick={() => toggle(c.category)}
+                  >
+                    <div className={styles.catCardIcon}>
+                      <CatIcon kind={meta.iconKind} frame={isSelected ? "#FFE08A" : "#FFF1E0"} />
+                    </div>
+                    <span className={styles.catCardLabel}>{meta.label}</span>
+                    <span className={styles.catCardCount}>{c.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className={styles.actionsRow}>
+              <label className={styles.rounds}>
+                Rounds
+                <input
+                  className={styles.roundsInput}
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={rounds}
+                  onChange={(e) => setRounds(Number(e.target.value))}
+                />
+              </label>
+              <button className={styles.configBtn} onClick={() => setShowConfig(true)}>
+                ⚙ Configurações
               </button>
             </div>
-          </div>
 
-          <div className="category-grid">
-            {categories.length === 0 && (
-              <p>Nenhuma categoria no banco — rode os seeders.</p>
-            )}
-            {categories.map((c) => {
-              const meta = getCategoryMeta(c.category);
-              const isSelected = selected.includes(c.category);
-              return (
-                <label
-                  key={c.category}
-                  className={`category-card ${isSelected ? "selected" : ""}`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => toggle(c.category)}
-                  />
-                  <span className="cat-icon">{meta.icon}</span>
-                  <span className="cat-label">{meta.label}</span>
-                  <span className="cat-count">{c.count}</span>
-                </label>
-              );
-            })}
-          </div>
-
-          <div className="lobby-actions">
-            <label className="rounds">
-              Rounds
-              <input
-                type="number"
-                min={1}
-                max={50}
-                value={rounds}
-                onChange={(e) => setRounds(Number(e.target.value))}
-              />
-            </label>
-
-            <button className="btn-outline" onClick={() => setShowConfig(true)}>
-              ⚙ Configurações
+            <button className={styles.startBtn} onClick={() => startGame(selected, rounds, config)}>
+              Iniciar partida →
             </button>
-          </div>
+            <p className={styles.hint}>Sem categoria selecionada = sorteia de todas as categorias.</p>
+          </>
+        ) : (
+          <p className={styles.waiting}>Aguardando o host iniciar a partida…</p>
+        )}
 
-          <button onClick={() => startGame(selected, rounds, config)}>
-            Iniciar partida
-          </button>
-          <p className="hint">
-            Sem categoria selecionada = sorteia de todas as categorias.
-          </p>
-        </div>
-      ) : (
-        <p className="waiting">Aguardando o host iniciar a partida…</p>
-      )}
-
-      {error && <p className="error">{error}</p>}
+        {error && <p className={styles.error}>{error}</p>}
+      </div>
 
       {/* Modal de configurações */}
       {showConfig && (
-        <div className="modal-backdrop" onClick={() => setShowConfig(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>⚙ Configurações</h2>
+        <div className={styles.modalBackdrop} onClick={() => setShowConfig(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2 className={styles.modalTitle}>⚙ Configurações</h2>
 
-            <label className="config-row">
+            <label className={styles.configRow}>
               <span>Duração do round</span>
-              <div className="config-input-group">
+              <div className={styles.configInputGroup}>
                 <input
                   type="range"
                   min={5}
@@ -152,14 +175,14 @@ export function Lobby() {
                   value={config.roundDuration}
                   onChange={(e) => updateConfig("roundDuration", Number(e.target.value))}
                 />
-                <span className="config-value">{config.roundDuration}s</span>
+                <span className={styles.configValue}>{config.roundDuration}s</span>
               </div>
             </label>
 
-            <label className="config-row toggle">
+            <label className={styles.configRow}>
               <span>
                 Múltiplas tentativas
-                <small>Permite errar e tentar novamente até acabar o tempo</small>
+                <small className={styles.configSmall}>Permite errar e tentar novamente até acabar o tempo</small>
               </span>
               <input
                 type="checkbox"
@@ -168,10 +191,10 @@ export function Lobby() {
               />
             </label>
 
-            <label className="config-row toggle">
+            <label className={styles.configRow}>
               <span>
                 Encerrar quando todos acertarem
-                <small>O round termina assim que o último jogador acerta</small>
+                <small className={styles.configSmall}>O round termina assim que o último jogador acerta</small>
               </span>
               <input
                 type="checkbox"
@@ -180,10 +203,10 @@ export function Lobby() {
               />
             </label>
 
-            <label className="config-row toggle">
+            <label className={styles.configRow}>
               <span>
                 Autocomplete
-                <small>Sugere respostas ao digitar 3+ letras</small>
+                <small className={styles.configSmall}>Sugere respostas ao digitar 3+ letras</small>
               </span>
               <input
                 type="checkbox"
@@ -192,7 +215,9 @@ export function Lobby() {
               />
             </label>
 
-            <button onClick={() => setShowConfig(false)}>Fechar</button>
+            <button className={styles.modalClose} onClick={() => setShowConfig(false)}>
+              Fechar
+            </button>
           </div>
         </div>
       )}
