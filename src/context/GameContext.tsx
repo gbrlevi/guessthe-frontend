@@ -69,8 +69,17 @@ interface GameState {
       allowMultipleAttempts: boolean;
       endOnAllCorrect: boolean;
       autocomplete: boolean;
+      depixelSpeed: number;
     },
   ) => void;
+  updateSettings: (patch: {
+    categories?: string[];
+    totalRounds?: number;
+    roundDuration?: number;
+    allowMultipleAttempts?: boolean;
+    endOnAllCorrect?: boolean;
+    depixelSpeed?: number;
+  }) => void;
   submitAnswer: (guess: string) => void;
   pauseRound: () => void;
   resumeRound: () => void;
@@ -257,6 +266,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         allowMultipleAttempts: boolean;
         endOnAllCorrect: boolean;
         autocomplete: boolean;
+        depixelSpeed: number;
       },
     ) => {
       setAutocompleteEnabled(config.autocomplete);
@@ -267,6 +277,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
         round_duration: config.roundDuration,
         allow_multiple_attempts: config.allowMultipleAttempts,
         end_on_all_correct: config.endOnAllCorrect,
+        depixel_speed: config.depixelSpeed,
+      });
+    },
+    [send],
+  );
+
+  const updateSettings = useCallback(
+    (patch: {
+      categories?: string[];
+      totalRounds?: number;
+      roundDuration?: number;
+      allowMultipleAttempts?: boolean;
+      endOnAllCorrect?: boolean;
+      depixelSpeed?: number;
+    }) => {
+      send({
+        type: "update_settings",
+        ...(patch.categories !== undefined && { categories: patch.categories }),
+        ...(patch.totalRounds !== undefined && { total_rounds: patch.totalRounds }),
+        ...(patch.roundDuration !== undefined && { round_duration: patch.roundDuration }),
+        ...(patch.allowMultipleAttempts !== undefined && { allow_multiple_attempts: patch.allowMultipleAttempts }),
+        ...(patch.endOnAllCorrect !== undefined && { end_on_all_correct: patch.endOnAllCorrect }),
+        ...(patch.depixelSpeed !== undefined && { depixel_speed: patch.depixelSpeed }),
       });
     },
     [send],
@@ -332,16 +365,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, paused, autocompleteEnabled,
       revealAnswer, revealResults, ranking, chatMessages,
-      createRoom, joinRoom, startGame, submitAnswer, pauseRound, resumeRound, backToLobby,
-      leaveRoom, changeIdentity,
+      createRoom, joinRoom, startGame, updateSettings, submitAnswer, pauseRound, resumeRound,
+      backToLobby, leaveRoom, changeIdentity,
     }),
     [
       phase, status, error, code, myId, isHost, myAvatar, myName, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, paused, autocompleteEnabled,
       revealAnswer, revealResults, ranking, chatMessages,
-      createRoom, joinRoom, startGame, submitAnswer, pauseRound, resumeRound, backToLobby,
-      leaveRoom, changeIdentity,
+      createRoom, joinRoom, startGame, updateSettings, submitAnswer, pauseRound, resumeRound,
+      backToLobby, leaveRoom, changeIdentity,
     ],
   );
 

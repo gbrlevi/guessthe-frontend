@@ -32,6 +32,7 @@ interface GameConfig {
   allowMultipleAttempts: boolean;
   endOnAllCorrect: boolean;
   autocomplete: boolean;
+  depixelSpeed: number;
 }
 
 const DEFAULT_CONFIG: GameConfig = {
@@ -39,6 +40,7 @@ const DEFAULT_CONFIG: GameConfig = {
   allowMultipleAttempts: true,
   endOnAllCorrect: true,
   autocomplete: true,
+  depixelSpeed: 5,
 };
 
 export function Lobby() {
@@ -47,6 +49,7 @@ export function Lobby() {
     isHost,
     players,
     startGame,
+    updateSettings,
     error,
     settings,
     autocompleteEnabled,
@@ -66,6 +69,7 @@ export function Lobby() {
   const [showIdentity, setShowIdentity] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [draftAvatarIndex, setDraftAvatarIndex] = useState(0);
+  const [starting, setStarting] = useState(false);
 
   const draftAvatar = AVATAR_KINDS[draftAvatarIndex] as AvatarKind;
   const prevDraftAvatar = () =>
@@ -90,17 +94,55 @@ export function Lobby() {
       .catch(() => setCategories([]));
   }, []);
 
-  const toggle = (c: string) =>
-    setSelected((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+  // Se o servidor devolver erro (ex: sem questões), libera o botão de iniciar
+  useEffect(() => {
+    if (error) setStarting(false);
+  }, [error]);
 
-  const selectAll = () => setSelected(categories.map((c) => c.category));
-  const clearAll = () => setSelected([]);
+  const toggle = (c: string) => {
+    setSelected((prev) => {
+      const next = prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c];
+      updateSettings({ categories: next });
+      return next;
+    });
+  };
 
-  const updateConfig = (key: keyof GameConfig, value: unknown) =>
-    setConfig((prev) => ({ ...prev, [key]: value }));
+  const selectAll = () => {
+    const all = categories.map((c) => c.category);
+    setSelected(all);
+    updateSettings({ categories: all });
+  };
+  const clearAll = () => {
+    setSelected([]);
+    updateSettings({ categories: [] });
+  };
 
-  const decreaseRounds = () => setRounds((r) => Math.max(1, r - 1));
-  const increaseRounds = () => setRounds((r) => Math.min(50, r + 1));
+  const updateConfig = (key: keyof GameConfig, value: unknown) => {
+    setConfig((prev) => {
+      const next = { ...prev, [key]: value };
+      // Sincroniza com o servidor em tempo real (só campos relevantes ao backend)
+      if (key === "roundDuration") updateSettings({ roundDuration: value as number });
+      if (key === "allowMultipleAttempts") updateSettings({ allowMultipleAttempts: value as boolean });
+      if (key === "endOnAllCorrect") updateSettings({ endOnAllCorrect: value as boolean });
+      if (key === "depixelSpeed") updateSettings({ depixelSpeed: value as number });
+      return next;
+    });
+  };
+
+  const decreaseRounds = () => {
+    setRounds((r) => {
+      const next = Math.max(1, r - 1);
+      updateSettings({ totalRounds: next });
+      return next;
+    });
+  };
+  const increaseRounds = () => {
+    setRounds((r) => {
+      const next = Math.min(50, r + 1);
+      updateSettings({ totalRounds: next });
+      return next;
+    });
+  };
 
   const handleCopy = () => {
     if (code) {
@@ -110,13 +152,21 @@ export function Lobby() {
     }
   };
 
-  // Determine selected categories and configurations for display
+  const handleStart = () => {
+    if (starting) return;
+    sfx.click();
+    setStarting(true);
+    startGame(selected, rounds, config);
+  };
+
+  // Valores visíveis pelo guest refletem as configurações sincronizadas pelo host
   const activeSelected = isHost ? selected : (settings?.categories || []);
   const activeRounds = isHost ? rounds : (settings?.total_rounds ?? 10);
   const activeDuration = isHost ? config.roundDuration : (settings?.round_duration ?? 20);
   const activeMultiple = isHost ? config.allowMultipleAttempts : (settings?.allow_multiple_attempts ?? true);
   const activeEndAll = isHost ? config.endOnAllCorrect : (settings?.end_on_all_correct ?? true);
   const activeAutocomplete = isHost ? config.autocomplete : autocompleteEnabled;
+  const activeDepixelSpeed = isHost ? config.depixelSpeed : (settings?.depixel_speed ?? 5);
 
   return (
     <div className={styles.screen}>
@@ -231,13 +281,14 @@ export function Lobby() {
                   </button>
 
                   <button
-                    className={styles.startBtn}
-                    onClick={() => {
-                      sfx.click();
-                      startGame(selected, rounds, config);
-                    }}
+                    className={`${styles.startBtn} ${starting ? styles.startBtnLoading : ""}`}
+                    onClick={handleStart}
+                    disabled={starting}
                   >
-                    Iniciar partida →
+                    {starting ? (
+                      <span className={styles.spinner} aria-hidden="true" />
+                    ) : null}
+                    {starting ? "Iniciando…" : "Iniciar partida →"}
                   </button>
                   <p className={styles.hint}>
                     Sem categoria selecionada = sorteia de todas as categorias.
@@ -271,6 +322,10 @@ export function Lobby() {
                       <span className={`${styles.ruleTag} ${activeAutocomplete ? styles.tagOn : styles.tagOff}`}>
                         {activeAutocomplete ? "Ativo" : "Inativo"}
                       </span>
+                    </div>
+                    <div className={styles.ruleItem}>
+                      <span className={styles.ruleName}>Vel. despixelização</span>
+                      <span className={styles.ruleVal}>{activeDepixelSpeed}/10</span>
                     </div>
                   </div>
                   <div className={styles.guestWaiting}>
@@ -428,6 +483,25 @@ export function Lobby() {
                 label="Autocomplete"
               />
             </div>
+
+            <label className={styles.configRow}>
+              <span>
+                Velocidade de despixelização
+                <small className={styles.configSmall}>1 = lento (fácil esconder), 10 = rápido (revela logo)</small>
+              </span>
+              <div className={styles.configInputGroup}>
+                <input
+                  className={styles.range}
+                  type="range"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={config.depixelSpeed}
+                  onChange={(e) => updateConfig("depixelSpeed", Number(e.target.value))}
+                />
+                <span className={styles.configValue}>{config.depixelSpeed}</span>
+              </div>
+            </label>
 
             <button className={styles.modalClose} onClick={() => setShowConfig(false)}>
               Salvar e Fechar

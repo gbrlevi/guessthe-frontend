@@ -27,11 +27,14 @@ export interface RoomSettings {
   round_duration: number;
   allow_multiple_attempts: boolean;
   end_on_all_correct: boolean;
+  depixel_speed: number;
 }
 
 export interface RankEntry {
+  id?: string;
   name: string;
   score: number;
+  avatar?: string;
 }
 
 export interface RoundResult {
@@ -154,6 +157,16 @@ export type ClientMessage =
       round_duration?: number;
       allow_multiple_attempts?: boolean;
       end_on_all_correct?: boolean;
+      depixel_speed?: number;
+    }
+  | {
+      type: "update_settings";
+      categories?: string[];
+      total_rounds?: number;
+      round_duration?: number;
+      allow_multiple_attempts?: boolean;
+      end_on_all_correct?: boolean;
+      depixel_speed?: number;
     }
   | { type: "submit_answer"; guess: string }
   | { type: "pause_round" }
