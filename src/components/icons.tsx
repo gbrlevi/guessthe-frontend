@@ -105,3 +105,13 @@ export function CheckIcon({ size = 26 }: IconProps) {
     </svg>
   );
 }
+
+export function CopyIcon({ size = 16 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ ...base, flex: "none" }}>
+      <rect x="9" y="9" width="11" height="11" rx="2.5" fill="#FFF1E0" stroke="#2A1206" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M5,15 H4 a2,2 0 0,1 -2,-2 V4 a2,2 0 0,1 2,-2 H13 a2,2 0 0,1 2,2 v1" fill="none" stroke="#2A1206" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
