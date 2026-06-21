@@ -7,9 +7,12 @@ export function PixelImage({ src, revealed }: { src: string; revealed?: boolean 
       alt=""
       draggable={false}
       style={{
+        maxWidth: "100%",
+        maxHeight: "100%",
         width: "100%",
         height: "100%",
         objectFit: "contain",
+        display: "block",
         imageRendering: revealed ? "auto" : "pixelated",
       }}
     />

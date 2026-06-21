@@ -1,8 +1,8 @@
-/* caixa escura para imagem/vídeo */
+/* caixa escura para imagem/vídeo — tamanho FIXO; mídia se adapta dentro */
 .mediaBox {
   position: relative;
-  flex: 1;
-  min-height: 320px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   border-radius: 20px;
   border: 4px solid #2a1206;
   overflow: hidden;
@@ -11,12 +11,13 @@
   align-items: center;
   justify-content: center;
   padding: 6px;
+  box-sizing: border-box;
 }
 
-/* caixa de áudio (equalizer) */
+/* caixa de áudio (equalizer) — altura fixa, player e volume dentro */
 .waveBox {
-  flex: 1;
-  min-height: 320px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   border-radius: 20px;
   border: 4px solid #2a1206;
   background: linear-gradient(160deg, #2a1206, #7a2e00);
@@ -24,14 +25,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 22px;
+  gap: 14px;
   padding: 22px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .waveBars {
   display: flex;
   align-items: flex-end;
   gap: 5px;
-  height: 135px;
+  height: 120px;
+  flex-shrink: 0;
 }
 .waveBar {
   width: 7px;
