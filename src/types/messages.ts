@@ -123,8 +123,14 @@ export interface ErrorMsg {
   message: string;
 }
 
+export interface Joined {
+  type: "joined";
+  player_id: string;
+}
+
 export type ServerMessage =
   | LobbyUpdate
+  | Joined
   | GameStarting
   | QuestionStart
   | RevealUpdate
@@ -140,7 +146,7 @@ export type ServerMessage =
 // ---- Mensagens cliente -> servidor ----
 
 export type ClientMessage =
-  | { type: "join"; name?: string }
+  | { type: "join"; name?: string; avatar?: string }
   | {
       type: "start_game";
       categories: string[];

@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
+import { sfx } from "../lib/sfx";
 import type { AvatarKind } from "../constants/avatars";
 import type {
   ChatMessage,
@@ -30,8 +31,10 @@ interface GameState {
   error: string | null;
 
   code: string | null;
+  myId: string | null;
   isHost: boolean;
   myAvatar: AvatarKind;
+  myName: string;
   players: PlayerPublic[];
   settings: RoomSettings | null;
 
@@ -72,6 +75,8 @@ interface GameState {
   pauseRound: () => void;
   resumeRound: () => void;
   backToLobby: () => void;
+  leaveRoom: () => void;
+  changeIdentity: (name: string, avatar: AvatarKind) => void;
 }
 
 const Ctx = createContext<GameState | null>(null);
@@ -80,10 +85,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [phase, setPhase] = useState<GamePhase>("home");
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState<string | null>(null);
-  const [isHost, setIsHost] = useState(false);
+  const [myId, setMyId] = useState<string | null>(null);
+  const [hostId, setHostId] = useState<string | null>(null);
   const [myAvatar, setMyAvatar] = useState<AvatarKind>("fox");
+  const [myName, setMyName] = useState("");
   const [players, setPlayers] = useState<PlayerPublic[]>([]);
   const [settings, setSettings] = useState<RoomSettings | null>(null);
+
+  // host autoritativo no servidor: sou host se o meu id == host_id do lobby.
+  const isHost = myId != null && myId === hostId;
 
   const [round, setRound] = useState(0);
   const [totalRounds, setTotalRounds] = useState(0);
@@ -109,8 +119,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const handleMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
+      case "joined":
+        setMyId(msg.player_id);
+        break;
       case "lobby_update":
         setCode(msg.code);
+        setHostId(msg.host_id);
         setPlayers(msg.players);
         setSettings(msg.settings);
         if (msg.state === "lobby") setPhase("lobby");
@@ -148,12 +162,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setAnswerResult(msg.correct);
         setAnswered(msg.locked);
         setSubmitting(false);
+        if (msg.correct) sfx.correct();
+        else sfx.wrong();
         break;
       case "reveal_answer":
         setRevealAnswer(msg.answer);
         setRevealResults(msg.results);
         setMedia(msg.media);
-        // o VideoReveal assume com a MESMA URL (já em cache) → toca instantâneo
+        // Atualiza pontuações acumuladas: results.score é o total do jogador, não o delta.
+        setPlayers((prev) =>
+          prev.map((p) => {
+            const r = msg.results.find((r) => r.id === p.id);
+            return r ? { ...p, score: r.score } : p;
+          }),
+        );
+        // o VideoPlayer assume com a MESMA URL (já em cache) → toca instantâneo
         setPrefetchVideoUrl(null);
         setPhase("reveal");
         break;
@@ -164,6 +187,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       case "game_over":
         setRanking(msg.ranking);
         setPhase("game_over");
+        sfx.fanfare();
         break;
       case "round_paused":
         setPaused(true);
@@ -183,12 +207,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const { status, connect, send } = useWebSocket(handleMessage);
+  const { status, connect, send, disconnect } = useWebSocket(handleMessage);
 
   const createRoom = useCallback(
     async (name: string, avatar: AvatarKind, roomName?: string) => {
       setError(null);
       setMyAvatar(avatar);
+      setMyName(name);
       const res = await fetch(`${API}/rooms`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -199,7 +224,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return;
       }
       const data: { code: string; host_id: string } = await res.json();
-      setIsHost(true);
+      // Já sabemos nosso id (== host_id) → isHost autoritativo sem flash de UI.
+      setMyId(data.host_id);
       setCode(data.code);
       connect(
         `${WS}/ws/${data.code}?name=${encodeURIComponent(name)}&player_id=${data.host_id}&avatar=${avatar}`,
@@ -211,8 +237,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const joinRoom = useCallback(
     (roomCode: string, name: string, avatar: AvatarKind) => {
       setError(null);
-      setIsHost(false);
+      setMyId(null); // o servidor envia o id real via "joined"
+      setHostId(null);
       setMyAvatar(avatar);
+      setMyName(name);
       const c = roomCode.trim().toUpperCase();
       setCode(c);
       connect(`${WS}/ws/${c}?name=${encodeURIComponent(name)}&avatar=${avatar}`);
@@ -260,20 +288,60 @@ export function GameProvider({ children }: { children: ReactNode }) {
     send({ type: "join" });
   }, [send]);
 
+  // Saída limpa: fecha o WS (servidor remove o jogador e avisa os demais) e
+  // restaura todo o estado para a tela inicial.
+  const leaveRoom = useCallback(() => {
+    disconnect();
+    setPhase("home");
+    setError(null);
+    setCode(null);
+    setMyId(null);
+    setHostId(null);
+    setPlayers([]);
+    setSettings(null);
+    setRound(0);
+    setTotalRounds(0);
+    setCategory("");
+    setMedia(null);
+    setTimeLeft(null);
+    setAnswered(false);
+    setSubmitting(false);
+    setAnswerResult(null);
+    setPaused(false);
+    setRevealAnswer(null);
+    setRevealResults([]);
+    setRanking([]);
+    setChatMessages([]);
+    setPrefetchVideoUrl(null);
+  }, [disconnect]);
+
+  // Troca de identidade (nick/avatar) sem reconectar — o servidor já aceita
+  // `join` com name/avatar e replica via lobby_update para todos.
+  const changeIdentity = useCallback(
+    (name: string, avatar: AvatarKind) => {
+      setMyAvatar(avatar);
+      setMyName(name);
+      send({ type: "join", name, avatar });
+    },
+    [send],
+  );
+
   const value = useMemo<GameState>(
     () => ({
-      phase, status, error, code, isHost, myAvatar, players, settings,
+      phase, status, error, code, myId, isHost, myAvatar, myName, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, paused, autocompleteEnabled,
       revealAnswer, revealResults, ranking, chatMessages,
       createRoom, joinRoom, startGame, submitAnswer, pauseRound, resumeRound, backToLobby,
+      leaveRoom, changeIdentity,
     }),
     [
-      phase, status, error, code, isHost, myAvatar, players, settings,
+      phase, status, error, code, myId, isHost, myAvatar, myName, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, paused, autocompleteEnabled,
       revealAnswer, revealResults, ranking, chatMessages,
       createRoom, joinRoom, startGame, submitAnswer, pauseRound, resumeRound, backToLobby,
+      leaveRoom, changeIdentity,
     ],
   );
 

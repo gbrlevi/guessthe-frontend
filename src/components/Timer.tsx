@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { useCountdown } from "../hooks/useCountdown";
+import { sfx } from "../lib/sfx";
 import styles from "./Timer.module.css";
 
 /**
@@ -9,6 +11,13 @@ import styles from "./Timer.module.css";
 export function Timer({ timeLeft, paused = false }: { timeLeft: number | null; paused?: boolean }) {
   const seconds = useCountdown(timeLeft, paused);
   const urgent = seconds <= 5;
+
+  // bipe nos últimos 3 segundos (só quando o contador realmente decrementa)
+  const prevSeconds = useRef(seconds);
+  useEffect(() => {
+    if (!paused && seconds < prevSeconds.current && seconds >= 1 && seconds <= 3) sfx.tick();
+    prevSeconds.current = seconds;
+  }, [seconds, paused]);
   return (
     <div
       className={styles.timer}

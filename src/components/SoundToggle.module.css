@@ -1,0 +1,23 @@
+.btn {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  border: 3px solid #2a1206;
+  background: #fff6ec;
+  box-shadow: 3px 3px 0 #2a1206;
+  cursor: pointer;
+  transition: all 0.14s;
+  padding: 0;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 3px 5px 0 #2a1206;
+}
+.btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #2a1206;
+}
