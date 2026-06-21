@@ -71,33 +71,66 @@
 /* Slider de volume */
 .volumeSlider {
   width: 100%;
-  height: 6px;
+  height: 10px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 999px;
-  border: 2px solid rgba(42, 18, 6, 0.5);
+  background: transparent;
   cursor: pointer;
   outline: none;
-  transition: opacity 0.15s;
+}
+.volumeSlider::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 5px;
+  background: #fff1e0;
+  border: 2px solid #2a1206;
+}
+.volumeSlider::-moz-range-track {
+  height: 10px;
+  border-radius: 5px;
+  background: #fff1e0;
+  border: 2px solid #2a1206;
 }
 .volumeSlider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #ffd96b, #ffc62e);
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #ffc62e;
   border: 2px solid #2a1206;
-  box-shadow: 1px 1px 0 #2a1206;
+  box-shadow: 2px 2px 0 #2a1206;
   cursor: pointer;
+  margin-top: -6px;
+  transition: all 0.1s ease;
+}
+.volumeSlider::-webkit-slider-thumb:hover {
+  background: #ff7a18;
+  transform: translateY(-0.5px);
+  box-shadow: 2px 2.5px 0 #2a1206;
+}
+.volumeSlider::-webkit-slider-thumb:active {
+  background: #d6266f;
+  transform: translateY(0.5px);
+  box-shadow: 1px 1px 0 #2a1206;
 }
 .volumeSlider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #ffd96b, #ffc62e);
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #ffc62e;
   border: 2px solid #2a1206;
-  box-shadow: 1px 1px 0 #2a1206;
+  box-shadow: 2px 2px 0 #2a1206;
   cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.1s ease;
+}
+.volumeSlider::-moz-range-thumb:hover {
+  background: #ff7a18;
+  transform: translateY(-0.5px);
+  box-shadow: 2px 2.5px 0 #2a1206;
+}
+.volumeSlider::-moz-range-thumb:active {
+  background: #d6266f;
+  transform: translateY(0.5px);
+  box-shadow: 1px 1px 0 #2a1206;
 }

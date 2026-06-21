@@ -332,9 +332,6 @@ export function Home() {
               Escolha um nickname antes de entrar na sala{" "}
               <strong>{pendingRoomCode}</strong>.
             </p>
-            <label className={styles.nickLabel} htmlFor="modal-nick">
-              Seu nick
-            </label>
             <input
               id="modal-nick"
               className={styles.nickInput}

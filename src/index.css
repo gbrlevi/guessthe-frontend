@@ -71,17 +71,14 @@ input {
   font-family: inherit;
 }
 
-/* scrollbar custom */
+/* Hide scrollbar globally across the site while maintaining scroll functionality */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #2a1206;
-  border-radius: 8px;
+  display: none; /* Chrome, Safari and Opera */
 }
 
 /* ============================= keyframes ldk-* ============================ */

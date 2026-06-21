@@ -812,7 +812,6 @@
   box-shadow: 1px 1px 0 #2a1206;
 }
 
-/* ----- slider Neubrutalista (config de duração) ----- */
 .range {
   -webkit-appearance: none;
   appearance: none;
@@ -825,9 +824,9 @@
 }
 .range::-webkit-slider-runnable-track {
   height: 14px;
-  border-radius: 999px;
+  border-radius: 8px;
   border: 3px solid #2a1206;
-  background: #ffe7c8;
+  background: #fff1e0;
 }
 .range::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -835,24 +834,47 @@
   width: 24px;
   height: 24px;
   margin-top: -8px;
-  border-radius: 7px;
+  border-radius: 6px;
   border: 3px solid #2a1206;
-  background: linear-gradient(180deg, #ffd96b, #ffc62e 55%, #f2a600);
-  box-shadow: 2px 2px 0 #2a1206;
+  background: #ffc62e;
+  box-shadow: 3px 3px 0 #2a1206;
+  transition: all 0.1s ease;
+}
+.range::-webkit-slider-thumb:hover {
+  background: #ff7a18;
+  transform: translateY(-1px);
+  box-shadow: 3px 4px 0 #2a1206;
+}
+.range::-webkit-slider-thumb:active {
+  background: #d6266f;
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0 #2a1206;
 }
 .range::-moz-range-track {
   height: 14px;
-  border-radius: 999px;
+  border-radius: 8px;
   border: 3px solid #2a1206;
-  background: #ffe7c8;
+  background: #fff1e0;
 }
 .range::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   border: 3px solid #2a1206;
-  background: linear-gradient(180deg, #ffd96b, #ffc62e 55%, #f2a600);
-  box-shadow: 2px 2px 0 #2a1206;
+  background: #ffc62e;
+  box-shadow: 3px 3px 0 #2a1206;
+  transition: all 0.1s ease;
+  box-sizing: border-box;
+}
+.range::-moz-range-thumb:hover {
+  background: #ff7a18;
+  transform: translateY(-1px);
+  box-shadow: 3px 4px 0 #2a1206;
+}
+.range::-moz-range-thumb:active {
+  background: #d6266f;
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0 #2a1206;
 }
 
 /* ----- modal de edição de perfil ----- */

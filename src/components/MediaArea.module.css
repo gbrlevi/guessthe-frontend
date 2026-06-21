@@ -12,6 +12,7 @@
   justify-content: center;
   padding: 6px;
   box-sizing: border-box;
+  flex: 1;
 }
 
 /* caixa de áudio (equalizer) — altura fixa, player e volume dentro */
@@ -29,6 +30,7 @@
   padding: 22px;
   box-sizing: border-box;
   overflow: hidden;
+  flex: 1;
 }
 .waveBars {
   display: flex;

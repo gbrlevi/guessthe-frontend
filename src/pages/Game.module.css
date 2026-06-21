@@ -3,9 +3,10 @@
   position: relative;
   z-index: 1;
   flex: 1;
-  padding: 22px 26px 0;
+  padding: 22px 26px;
   display: flex;
   flex-direction: column;
+  justify-content: safe center;
   gap: 18px;
   max-width: 1300px;
   width: 100%;
@@ -398,7 +399,7 @@
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   gap: 24px;
-  align-items: stretch;
+  align-items: start;
 }
 .answerCard {
   border: 5px solid #2a1206;

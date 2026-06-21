@@ -25,10 +25,7 @@
 .slider {
   width: 72px;
   cursor: pointer;
-  accent-color: var(--bg);
-  /* height do thumb via accent-color não é suficiente em todos os browsers,
-     então forçamos a altura do track */
-  height: 4px;
+  height: 10px;
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
@@ -39,38 +36,61 @@
 
 /* Track */
 .slider::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 4px;
-  background: #e0c3a4;
+  height: 10px;
+  border-radius: 5px;
+  background: #fff1e0;
   border: 2px solid #2a1206;
 }
 .slider::-moz-range-track {
-  height: 4px;
-  border-radius: 4px;
-  background: #e0c3a4;
+  height: 10px;
+  border-radius: 5px;
+  background: #fff1e0;
   border: 2px solid #2a1206;
 }
 
 /* Thumb */
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--bg, #ff7a18);
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #ffc62e;
   border: 2px solid #2a1206;
-  box-shadow: 1px 1px 0 #2a1206;
+  box-shadow: 2px 2px 0 #2a1206;
   cursor: pointer;
-  margin-top: -8px;
+  margin-top: -6px;
+  transition: all 0.1s ease;
+}
+.slider::-webkit-slider-thumb:hover {
+  background: #ff7a18;
+  transform: translateY(-0.5px);
+  box-shadow: 2px 2.5px 0 #2a1206;
+}
+.slider::-webkit-slider-thumb:active {
+  background: #d6266f;
+  transform: translateY(0.5px);
+  box-shadow: 1px 1px 0 #2a1206;
 }
 .slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--bg, #ff7a18);
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #ffc62e;
   border: 2px solid #2a1206;
-  box-shadow: 1px 1px 0 #2a1206;
+  box-shadow: 2px 2px 0 #2a1206;
   cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.1s ease;
+}
+.slider::-moz-range-thumb:hover {
+  background: #ff7a18;
+  transform: translateY(-0.5px);
+  box-shadow: 2px 2.5px 0 #2a1206;
+}
+.slider::-moz-range-thumb:active {
+  background: #d6266f;
+  transform: translateY(0.5px);
+  box-shadow: 1px 1px 0 #2a1206;
 }
 
 .slider:disabled {
