@@ -4,6 +4,28 @@ import styles from "./AnswerInput.module.css";
 
 const API = import.meta.env.VITE_API_URL;
 
+const MAX_SUGGESTIONS = 8;
+const MIN_QUERY_LEN = 3;
+
+// Pool de títulos por categoria, pré-carregado uma vez e reaproveitado entre
+// rounds da mesma categoria. O autocomplete passa a ser 100% local (instantâneo,
+// sem requisição por tecla). Guardamos a Promise para deduplicar buscas em voo.
+const poolCache = new Map<string, Promise<string[]>>();
+
+function loadAnswerPool(category: string): Promise<string[]> {
+  let p = poolCache.get(category);
+  if (!p) {
+    p = fetch(`${API}/autocomplete/all?category=${encodeURIComponent(category)}`)
+      .then((r) => r.json() as Promise<string[]>)
+      .catch(() => {
+        poolCache.delete(category); // falhou -> permite nova tentativa no próximo round
+        return [] as string[];
+      });
+    poolCache.set(category, p);
+  }
+  return p;
+}
+
 export function AnswerInput() {
   const { submitAnswer, answered, submitting, answerResult, closeAnswer, autocompleteEnabled, category, timeLeft } =
     useGame();
@@ -11,7 +33,7 @@ export function AnswerInput() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1); // sugestão destacada (teclado)
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const [pool, setPool] = useState<string[]>([]); // títulos da categoria (pré-carregados)
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -36,29 +58,44 @@ export function AnswerInput() {
     };
   }, []);
 
-  // busca sugestões com debounce
+  // Pré-carrega os títulos da categoria uma vez (no início do round). A partir
+  // daí o autocomplete é 100% local - instantâneo e sem requisição por tecla.
   useEffect(() => {
-    clearTimeout(debounceRef.current);
-    if (!autocompleteEnabled || guess.length < 3) {
+    if (!autocompleteEnabled || !category) {
+      setPool([]);
+      return;
+    }
+    let active = true;
+    loadAnswerPool(category).then((list) => {
+      if (active) setPool(list);
+    });
+    return () => {
+      active = false;
+    };
+  }, [category, autocompleteEnabled]);
+
+  // Filtragem local: substring case-insensitive (espelha o ilike "%q%" do
+  // backend), com matches por prefixo no topo. Sem rede, sem debounce.
+  useEffect(() => {
+    const q = guess.trim().toLowerCase();
+    if (!autocompleteEnabled || q.length < MIN_QUERY_LEN || pool.length === 0) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const r = await fetch(
-          `${API}/autocomplete?category=${encodeURIComponent(category)}&q=${encodeURIComponent(guess)}`,
-        );
-        const data: string[] = await r.json();
-        setSuggestions(data);
-        setShowSuggestions(data.length > 0);
-        setActiveIndex(-1); // reseta o destaque a cada nova lista
-      } catch {
-        setSuggestions([]);
-      }
-    }, 300);
-    return () => clearTimeout(debounceRef.current);
-  }, [guess, category, autocompleteEnabled]);
+    const matches = pool
+      .filter((a) => a.toLowerCase().includes(q))
+      .sort((a, b) => {
+        // prefixo primeiro; depois o mais curto (palpite mais "próximo")
+        const ap = a.toLowerCase().startsWith(q) ? 0 : 1;
+        const bp = b.toLowerCase().startsWith(q) ? 0 : 1;
+        return ap !== bp ? ap - bp : a.length - b.length;
+      })
+      .slice(0, MAX_SUGGESTIONS);
+    setSuggestions(matches);
+    setShowSuggestions(matches.length > 0);
+    setActiveIndex(-1); // reseta o destaque a cada nova lista
+  }, [guess, pool, autocompleteEnabled]);
 
   // fecha o dropdown ao clicar fora
   useEffect(() => {
@@ -79,7 +116,7 @@ export function AnswerInput() {
     submitAnswer(s);
   };
 
-  // Navegação por teclado no dropdown: ↑/↓ percorre, Enter escolhe, Esc fecha.
+  // Navegação por teclado no dropdown: setas percorrem, Enter escolhe, Esc fecha.
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!showSuggestions || suggestions.length === 0) return;
     if (e.key === "ArrowDown") {
