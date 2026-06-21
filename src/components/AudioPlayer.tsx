@@ -19,7 +19,14 @@ export function AudioPlayer({ src, autoPlay = true }: { src: string; autoPlay?: 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1
-  const [volume, setVolume] = useState(0.8);   // 0..1
+  const [volume, setVolume] = useState(() => {
+    try {
+      const saved = localStorage.getItem("ldk-media-volume");
+      return saved !== null ? Number(saved) : 0.8;
+    } catch {
+      return 0.8;
+    }
+  });
   const [muted, setMuted] = useState(sfx.isMuted());
 
   // Sincroniza mute com o botão global de som
@@ -36,6 +43,14 @@ export function AudioPlayer({ src, autoPlay = true }: { src: string; autoPlay?: 
     const el = audioRef.current;
     if (!el) return;
     el.volume = volume;
+  }, [volume]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ldk-media-volume", String(volume));
+    } catch {
+      // ignore
+    }
   }, [volume]);
 
   useEffect(() => {

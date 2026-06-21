@@ -16,7 +16,14 @@ export function VideoPlayer({ src }: { src: string }) {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.8);
+  const [volume, setVolume] = useState(() => {
+    try {
+      const saved = localStorage.getItem("ldk-media-volume");
+      return saved !== null ? Number(saved) : 0.8;
+    } catch {
+      return 0.8;
+    }
+  });
   const [muted, setMuted] = useState(sfx.isMuted());
 
   // Sincroniza mute com o botão global de som
@@ -32,6 +39,14 @@ export function VideoPlayer({ src }: { src: string }) {
     const el = videoRef.current;
     if (!el) return;
     el.volume = volume;
+  }, [volume]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ldk-media-volume", String(volume));
+    } catch {
+      // ignore
+    }
   }, [volume]);
 
   useEffect(() => {

@@ -97,8 +97,39 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [code, setCode] = useState<string | null>(null);
   const [myId, setMyId] = useState<string | null>(null);
   const [hostId, setHostId] = useState<string | null>(null);
-  const [myAvatar, setMyAvatar] = useState<AvatarKind>("fox");
-  const [myName, setMyName] = useState("");
+  const [myAvatar, setMyAvatar] = useState<AvatarKind>(() => {
+    try {
+      const saved = localStorage.getItem("ldk-avatar");
+      if (saved) return saved as AvatarKind;
+    } catch {
+      // ignore
+    }
+    return "fox";
+  });
+  const [myName, setMyName] = useState(() => {
+    try {
+      return localStorage.getItem("ldk-nickname") || "";
+    } catch {
+      return "";
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ldk-nickname", myName);
+    } catch {
+      // ignore
+    }
+  }, [myName]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ldk-avatar", myAvatar);
+    } catch {
+      // ignore
+    }
+  }, [myAvatar]);
+
   const [players, setPlayers] = useState<PlayerPublic[]>([]);
   const [settings, setSettings] = useState<RoomSettings | null>(null);
 

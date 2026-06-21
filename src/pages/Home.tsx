@@ -29,16 +29,49 @@ const STATE_LABEL: Record<string, string> = {
 
 export function Home() {
   const { createRoom, joinRoom, error } = useGame();
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => {
+    try {
+      return localStorage.getItem("ldk-nickname") || "";
+    } catch {
+      return "";
+    }
+  });
   const [roomName, setRoomName] = useState("");
   const [code, setCode] = useState("");
-  const [avatarIndex, setAvatarIndex] = useState(0);
+  const [avatarIndex, setAvatarIndex] = useState(() => {
+    try {
+      const saved = localStorage.getItem("ldk-avatar");
+      if (saved) {
+        const idx = AVATAR_KINDS.indexOf(saved as AvatarKind);
+        if (idx !== -1) return idx;
+      }
+    } catch {
+      // ignore
+    }
+    return 0;
+  });
   const [rooms, setRooms] = useState<LiveRoom[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [view, setView] = useState<"home" | "rooms">("home");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const avatarKind = AVATAR_KINDS[avatarIndex] as AvatarKind;
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ldk-nickname", name);
+    } catch {
+      // ignore
+    }
+  }, [name]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ldk-avatar", avatarKind);
+    } catch {
+      // ignore
+    }
+  }, [avatarKind]);
 
   const prevAvatar = () => setAvatarIndex((i) => (i - 1 + AVATAR_KINDS.length) % AVATAR_KINDS.length);
   const nextAvatar = () => setAvatarIndex((i) => (i + 1) % AVATAR_KINDS.length);
