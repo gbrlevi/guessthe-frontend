@@ -13,6 +13,14 @@ export function AnswerInput() {
   const [activeIndex, setActiveIndex] = useState(-1); // sugestão destacada (teclado)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Mantém o campo sempre "clicado": foca no início do round e devolve o foco
+  // assim que ele volta a ser editável (após enviar/reabilitar), para o jogador
+  // continuar digitando sem precisar clicar de novo.
+  useEffect(() => {
+    if (!submitting) inputRef.current?.focus();
+  }, [submitting]);
 
   // Refs atualizados a cada render para que o cleanup de unmount leia valores atuais
   const guessRef = useRef("");
@@ -134,6 +142,7 @@ export function AnswerInput() {
             </div>
           )}
           <input
+            ref={inputRef}
             className={styles.input}
             autoFocus
             value={guess}
