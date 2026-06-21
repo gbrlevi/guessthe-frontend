@@ -487,7 +487,7 @@ export function Lobby() {
             <label className={styles.configRow}>
               <span>
                 Velocidade de despixelização
-                <small className={styles.configSmall}>1 = lento (fácil esconder), 10 = rápido (revela logo)</small>
+                <small className={styles.configSmall}>1 = lento, 10 = rápido</small>
               </span>
               <div className={styles.configInputGroup}>
                 <input

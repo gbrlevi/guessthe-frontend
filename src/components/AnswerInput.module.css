@@ -110,6 +110,24 @@
   animation: var(--kf-pulse) 1.4s ease-in-out infinite;
 }
 
+/* aviso de resposta próxima (similar ao Gartic) */
+.closeHint {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-weight: 900;
+  font-size: 13px;
+  color: #2a1206;
+  background: linear-gradient(180deg, #ffd166, #ffb703);
+  border: 3px solid #2a1206;
+  border-radius: 14px;
+  padding: 8px 14px;
+  box-shadow: 3px 3px 0 #2a1206;
+  animation: var(--kf-pulse) 1.4s ease-in-out infinite;
+}
+
 /* aviso inline "errou, tente novamente" */
 .inlineWrong {
   position: absolute;
@@ -147,4 +165,8 @@
 .wrong {
   background: linear-gradient(180deg, #ff7a5c, #ff5436);
   color: #fff;
+}
+.close {
+  background: linear-gradient(180deg, #ffd166, #ffb703);
+  color: #2a1206;
 }

@@ -102,6 +102,21 @@ export const sfx = {
       { freq: 1046.5, at: 0.27, dur: 0.22 }, // C6
     ]);
   },
+  /**
+   * "Está quente": dois toques sine suaves e ascendentes (D5→F#5), ganho baixo.
+   * Cue gentil para o jogador desatento perceber que está perto — convidativo,
+   * nunca estridente como o acerto/erro, para não cansar a cada palpite próximo.
+   */
+  near() {
+    if (muted) return;
+    sequence(
+      [
+        { freq: 587.33, at: 0, dur: 0.14, gain: 0.08 }, // D5
+        { freq: 739.99, at: 0.1, dur: 0.22, gain: 0.1 }, // F#5
+      ],
+      "sine",
+    );
+  },
   /** Erro: buzina curta descendente, discreta. */
   wrong() {
     if (muted) return;

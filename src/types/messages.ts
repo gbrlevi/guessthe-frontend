@@ -131,6 +131,10 @@ export interface Joined {
   player_id: string;
 }
 
+export interface CloseAnswer {
+  type: "close_answer";
+}
+
 export type ServerMessage =
   | LobbyUpdate
   | Joined
@@ -144,7 +148,8 @@ export type ServerMessage =
   | RoundPaused
   | RoundResumed
   | ChatMessage
-  | ErrorMsg;
+  | ErrorMsg
+  | CloseAnswer;
 
 // ---- Mensagens cliente -> servidor ----
 

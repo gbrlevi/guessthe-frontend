@@ -5,7 +5,7 @@ import styles from "./AnswerInput.module.css";
 const API = import.meta.env.VITE_API_URL;
 
 export function AnswerInput() {
-  const { submitAnswer, answered, submitting, answerResult, autocompleteEnabled, category, timeLeft } =
+  const { submitAnswer, answered, submitting, answerResult, closeAnswer, autocompleteEnabled, category, timeLeft } =
     useGame();
   const [guess, setGuess] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -101,25 +101,33 @@ export function AnswerInput() {
 
   // locked = acertou ou sem retry
   if (answered) {
+    const feedbackClass = answerResult ? styles.correct : closeAnswer ? styles.close : styles.wrong;
+    const feedbackMsg = answerResult
+      ? "✅ Acertou! Aguardando fim do round…"
+      : closeAnswer
+      ? "Quase! Sua resposta estava próxima. Aguardando fim do round…"
+      : "❌ Errou. Aguardando fim do round…";
     return (
       <div className={styles.bar}>
-        <div
-          className={`${styles.feedback} ${answerResult ? styles.correct : styles.wrong}`}
-          role="status"
-          aria-live="polite"
-        >
-          {answerResult ? "✅ Acertou! Aguardando fim do round…" : "❌ Errou. Aguardando fim do round…"}
+        <div className={`${styles.feedback} ${feedbackClass}`} role="status" aria-live="polite">
+          {feedbackMsg}
         </div>
       </div>
     );
   }
 
   const showAutoHint = guess.trim().length > 0 && timeLeft != null && timeLeft <= 5;
+  const showCloseHint = closeAnswer && !showSuggestions && !showAutoHint;
 
   return (
     <form className={styles.bar} onSubmit={onSubmit}>
       <div className={styles.inner}>
         <div className={styles.autocompleteWrap} ref={wrapperRef}>
+          {showCloseHint && (
+            <div className={styles.closeHint} role="status" aria-live="polite">
+              Sua resposta está próxima!
+            </div>
+          )}
           {showAutoHint && (
             <div className={styles.autoHint} role="status" aria-live="polite">
               ⏳ Seu palpite atual será enviado ao acabar o tempo

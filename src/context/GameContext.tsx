@@ -53,6 +53,7 @@ interface GameState {
   answered: boolean;
   submitting: boolean;
   answerResult: boolean | null;
+  closeAnswer: boolean;
   paused: boolean;
 
   autocompleteEnabled: boolean;
@@ -150,6 +151,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [answered, setAnswered] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [answerResult, setAnswerResult] = useState<boolean | null>(null);
+  const [closeAnswer, setCloseAnswer] = useState(false);
   const [paused, setPaused] = useState(false);
   const [autocompleteEnabled, setAutocompleteEnabled] = useState(true);
 
@@ -167,7 +169,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const loadingAudioRef = useRef<HTMLAudioElement | null>(null);
   const pendingQuestionRef = useRef<QuestionStart | null>(null);
 
+  // Coordenação dos sons de palpite: o som de erro é adiado por um instante para
+  // que, se o palpite for "próximo", o cue suave de close_answer toque sozinho —
+  // o som de erro é mais forte e mascararia o alerta. Funciona nas duas ordens
+  // de chegada (answer_result→close_answer ou close_answer→answer_result).
+  const wrongSoundTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const closeRecentRef = useRef(false);
+
   const applyQuestionStart = useCallback((msg: QuestionStart) => {
+    clearTimeout(wrongSoundTimerRef.current);
+    closeRecentRef.current = false;
     setRound(msg.round);
     setTotalRounds(msg.total_rounds);
     setCategory(msg.category);
@@ -178,6 +189,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setAnswered(false);
     setSubmitting(false);
     setAnswerResult(null);
+    setCloseAnswer(false);
     setRevealAnswer(null);
     setRevealResults([]);
     setPaused(false);
@@ -250,8 +262,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setAnswerResult(msg.correct);
         setAnswered(msg.locked);
         setSubmitting(false);
-        if (msg.correct) sfx.correct();
-        else sfx.wrong();
+        setCloseAnswer(false);
+        clearTimeout(wrongSoundTimerRef.current);
+        if (msg.correct) {
+          closeRecentRef.current = false;
+          sfx.correct();
+        } else if (closeRecentRef.current) {
+          // close_answer já chegou para este palpite → só o cue suave, sem erro.
+          closeRecentRef.current = false;
+        } else {
+          // Adia o erro: se um close_answer chegar logo a seguir, ele cancela
+          // este som e toca o alerta gentil no lugar.
+          wrongSoundTimerRef.current = setTimeout(() => {
+            if (!closeRecentRef.current) sfx.wrong();
+            closeRecentRef.current = false;
+          }, 150);
+        }
+        break;
+      case "close_answer":
+        setCloseAnswer(true);
+        closeRecentRef.current = true;
+        clearTimeout(wrongSoundTimerRef.current); // cancela o erro adiado
+        sfx.near(); // cue sonoro gentil reforçando o aviso "está próxima"
         break;
       case "reveal_answer":
         setRevealAnswer(msg.answer);
@@ -420,6 +452,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setAnswered(false);
     setSubmitting(false);
     setAnswerResult(null);
+    setCloseAnswer(false);
     setPaused(false);
     setRevealAnswer(null);
     setRevealResults([]);
@@ -451,7 +484,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     () => ({
       phase, status, error, code, myId, isHost, myAvatar, myName, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
-      answered, submitting, answerResult, paused, autocompleteEnabled,
+      answered, submitting, answerResult, closeAnswer, paused, autocompleteEnabled,
       revealAnswer, revealResults, ranking, chatMessages,
       createRoom, joinRoom, startGame, updateSettings, submitAnswer, pauseRound, resumeRound,
       backToLobby, leaveRoom, changeIdentity,
@@ -459,7 +492,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [
       phase, status, error, code, myId, isHost, myAvatar, myName, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
-      answered, submitting, answerResult, paused, autocompleteEnabled,
+      answered, submitting, answerResult, closeAnswer, paused, autocompleteEnabled,
       revealAnswer, revealResults, ranking, chatMessages,
       createRoom, joinRoom, startGame, updateSettings, submitAnswer, pauseRound, resumeRound,
       backToLobby, leaveRoom, changeIdentity,
