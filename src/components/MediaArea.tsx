@@ -38,9 +38,6 @@ export function MediaArea({ media, revealed }: { media: MediaPayload | null; rev
           ))}
         </div>
         <AudioPlayer src={media.url} />
-        <span className={styles.caption}>
-          {revealed ? "[ áudio revelado ]" : "[ reproduzindo · que som é esse? ]"}
-        </span>
       </div>
     );
   }
