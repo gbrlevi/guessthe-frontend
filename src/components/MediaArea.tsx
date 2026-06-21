@@ -1,7 +1,7 @@
 import type { MediaPayload } from "../types/messages";
-import { AudioReveal } from "./AudioReveal";
+import { AudioPlayer } from "./AudioPlayer";
 import { PixelImage } from "./PixelImage";
-import { VideoReveal } from "./VideoReveal";
+import { VideoPlayer } from "./VideoPlayer";
 import styles from "./MediaArea.module.css";
 
 const WAVE_BARS = Array.from({ length: 32 }, (_, i) => i);
@@ -37,7 +37,7 @@ export function MediaArea({ media, revealed }: { media: MediaPayload | null; rev
             <div key={i} className={styles.waveBar} style={{ animationDelay: `${(i * 0.055).toFixed(3)}s` }} />
           ))}
         </div>
-        <AudioReveal src={media.url} />
+        <AudioPlayer src={media.url} />
         <span className={styles.caption}>
           {revealed ? "[ áudio revelado ]" : "[ reproduzindo · que som é esse? ]"}
         </span>
@@ -48,7 +48,7 @@ export function MediaArea({ media, revealed }: { media: MediaPayload | null; rev
   if (media.kind === "video" && media.url) {
     return (
       <div className={styles.mediaBox}>
-        <VideoReveal src={media.url} />
+        <VideoPlayer src={media.url} />
       </div>
     );
   }

@@ -48,10 +48,15 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 .msgName {
   font-weight: 900;
   font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 .msgBadge {
   font-weight: 900;

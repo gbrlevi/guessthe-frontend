@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "../components/Avatar";
-import { EyesIcon, GridIcon, SparkleIcon } from "../components/icons";
+import { SoundToggle } from "../components/SoundToggle";
+import { EyesIcon, FatArrowIcon, GridIcon, SparkleIcon } from "../components/icons";
 import { AVATAR_KINDS, type AvatarKind } from "../constants/avatars";
 import { useGame } from "../context/GameContext";
+import { sfx } from "../lib/sfx";
 import styles from "./Home.module.css";
 
 const API = import.meta.env.VITE_API_URL;
@@ -62,6 +64,12 @@ export function Home() {
     };
   }, []);
 
+  // Deep link: ?room=CODE pré-preenche o campo de código ao abrir o app.
+  useEffect(() => {
+    const r = new URLSearchParams(window.location.search).get("room");
+    if (r) setCode(r.toUpperCase().slice(0, 6));
+  }, []);
+
   const handleJoinRoom = (roomCode: string) => {
     if (!name.trim()) {
       setCode(roomCode);
@@ -72,6 +80,7 @@ export function Home() {
 
   return (
     <div className={styles.screen}>
+      <SoundToggle className={styles.homeSound} />
       <div className={styles.card}>
         {/* ribbon */}
         <div className={styles.ribbon}>
@@ -100,7 +109,7 @@ export function Home() {
 
                 <div className={styles.carousel}>
                   <button className={styles.arrowBtn} onClick={prevAvatar} aria-label="Avatar anterior">
-                    ‹
+                    <FatArrowIcon dir="left" size={26} />
                   </button>
                   <div className={styles.avatarWrap}>
                     <div className={styles.avatarBox}>
@@ -108,7 +117,7 @@ export function Home() {
                     </div>
                   </div>
                   <button className={styles.arrowBtn} onClick={nextAvatar} aria-label="Próximo avatar">
-                    ›
+                    <FatArrowIcon dir="right" size={26} />
                   </button>
                 </div>
 
@@ -123,6 +132,7 @@ export function Home() {
                   maxLength={24}
                   placeholder="Ex: RaposaVeloz"
                 />
+                <div className={styles.nickCount}>{name.length}/24</div>
               </div>
 
               {/* Coluna das Opções de Sala (Direita) */}
@@ -143,7 +153,10 @@ export function Home() {
                   <button
                     className={styles.primaryBtn}
                     disabled={!canCreate}
-                    onClick={() => createRoom(name.trim(), avatarKind, roomName.trim() || undefined)}
+                    onClick={() => {
+                      sfx.click();
+                      createRoom(name.trim(), avatarKind, roomName.trim() || undefined);
+                    }}
                   >
                     CRIAR SALA →
                   </button>
@@ -169,7 +182,10 @@ export function Home() {
                   <button
                     className={styles.joinBtn}
                     disabled={!canJoin}
-                    onClick={() => joinRoom(code.trim(), name.trim(), avatarKind)}
+                    onClick={() => {
+                      sfx.click();
+                      joinRoom(code.trim(), name.trim(), avatarKind);
+                    }}
                   >
                     Entrar
                   </button>

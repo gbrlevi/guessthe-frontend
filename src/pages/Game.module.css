@@ -82,6 +82,46 @@
 }
 .headerRight {
   justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* controles flutuantes (fases sem header: reveal/scoreboard/starting/fim) */
+.topControls {
+  position: fixed;
+  top: 16px;
+  right: 18px;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.exitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 44px;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #c0241c;
+  background: #ffe3dc;
+  border: 3px solid #2a1206;
+  border-radius: 14px;
+  padding: 0 14px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #2a1206;
+  transition: all 0.14s;
+}
+.exitBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 3px 5px 0 #2a1206;
+}
+.exitBtn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #2a1206;
 }
 .pauseBtn {
   width: 48px;

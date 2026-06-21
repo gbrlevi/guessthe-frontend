@@ -115,3 +115,71 @@ export function CopyIcon({ size = 16 }: IconProps) {
   );
 }
 
+/** Seta "gordinha" de desenho — usada no carrossel de avatares. */
+export function FatArrowIcon({ size = 26, dir = "left" }: IconProps & { dir?: "left" | "right" }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      style={{ ...base, flex: "none", transform: dir === "right" ? "scaleX(-1)" : undefined }}
+    >
+      <path
+        d="M14.5,4.5 L7,12 l7.5,7.5"
+        fill="none"
+        stroke="#2A1206"
+        strokeWidth="4.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/** Porta com seta — ação de "Sair". */
+export function ExitIcon({ size = 16 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ ...base, flex: "none" }}>
+      <path d="M13,3 H5 a1,1 0 0,0 -1,1 V20 a1,1 0 0,0 1,1 H13" fill="none" stroke="#2A1206" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16,8 l4,4 -4,4" fill="none" stroke="#2A1206" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M20,12 H10" fill="none" stroke="#2A1206" strokeWidth="2.2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function PlayIcon({ size = 22 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ ...base, flex: "none" }}>
+      <path d="M8,5.5 L18,12 L8,18.5 Z" fill="#2A1206" stroke="#2A1206" strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function PauseIcon({ size = 22 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ ...base, flex: "none" }}>
+      <rect x="6.5" y="5" width="4" height="14" rx="1.4" fill="#2A1206" />
+      <rect x="13.5" y="5" width="4" height="14" rx="1.4" fill="#2A1206" />
+    </svg>
+  );
+}
+
+export function SoundOnIcon({ size = 18 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ ...base, flex: "none" }}>
+      <path d="M4,9 H7 L12,5 V19 L7,15 H4 Z" fill="#FFC62E" stroke="#2A1206" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M15.5,9 a4,4 0 0 1 0,6" fill="none" stroke="#2A1206" strokeWidth="2" strokeLinecap="round" />
+      <path d="M18,6.5 a8,8 0 0 1 0,11" fill="none" stroke="#2A1206" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function SoundOffIcon({ size = 18 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" style={{ ...base, flex: "none" }}>
+      <path d="M4,9 H7 L12,5 V19 L7,15 H4 Z" fill="#E0C3A4" stroke="#2A1206" strokeWidth="2" strokeLinejoin="round" />
+      <path d="M16,9 l5,6 M21,9 l-5,6" fill="none" stroke="#2A1206" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+

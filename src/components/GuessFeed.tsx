@@ -30,7 +30,7 @@ export function GuessFeed() {
           <span className={styles.playerCount}>{players.length} jogador{players.length !== 1 ? "es" : ""}</span>
         )}
       </div>
-      <div className={styles.feed} ref={feedRef}>
+      <div className={styles.feed} ref={feedRef} aria-live="polite" aria-label="Feed de palpites" aria-relevant="additions">
         {chatMessages.length === 0 && (
           <div className={styles.empty}>Aguardando palpites…</div>
         )}

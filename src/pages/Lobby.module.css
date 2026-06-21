@@ -718,3 +718,178 @@
   transform: translate(0, 3px);
   box-shadow: 2px 2px 0 #2a1206;
 }
+
+/* ----- meu card de jogador (clicável p/ editar perfil) ----- */
+.playerRowMe {
+  font: inherit;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  border-color: #d6266f;
+  box-shadow: 2.5px 2.5px 0 #d6266f;
+}
+.playerRowMe:hover {
+  transform: translateY(-2px);
+  box-shadow: 2.5px 4.5px 0 #d6266f;
+}
+.meTag {
+  font-weight: 900;
+  font-size: 9px;
+  text-transform: uppercase;
+  background: #5aa9e6;
+  color: #fff;
+  border-radius: 6px;
+  padding: 1px 6px;
+  border: 2px solid #2a1206;
+  box-shadow: 1px 1px 0 #2a1206;
+}
+.editHint {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.65;
+}
+
+/* ----- rodapé do sidebar (som + sair) ----- */
+.sidebarFooter {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+.leaveBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #c0241c;
+  background: #ffe3dc;
+  border: 3px solid #2a1206;
+  border-radius: 14px;
+  padding: 10px 14px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #2a1206;
+  transition: all 0.14s;
+}
+.leaveBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 3px 5px 0 #2a1206;
+}
+.leaveBtn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #2a1206;
+}
+
+/* ----- slider Neubrutalista (config de duração) ----- */
+.range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 150px;
+  background: transparent;
+  cursor: pointer;
+}
+.range:focus {
+  outline: none;
+}
+.range::-webkit-slider-runnable-track {
+  height: 14px;
+  border-radius: 999px;
+  border: 3px solid #2a1206;
+  background: #ffe7c8;
+}
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -8px;
+  border-radius: 7px;
+  border: 3px solid #2a1206;
+  background: linear-gradient(180deg, #ffd96b, #ffc62e 55%, #f2a600);
+  box-shadow: 2px 2px 0 #2a1206;
+}
+.range::-moz-range-track {
+  height: 14px;
+  border-radius: 999px;
+  border: 3px solid #2a1206;
+  background: #ffe7c8;
+}
+.range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 3px solid #2a1206;
+  background: linear-gradient(180deg, #ffd96b, #ffc62e 55%, #f2a600);
+  box-shadow: 2px 2px 0 #2a1206;
+}
+
+/* ----- modal de edição de perfil ----- */
+.identityCarousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 6px 0 18px;
+}
+.identityArrow {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 14px;
+  border: 4px solid #2a1206;
+  background: linear-gradient(180deg, #fff, #ffe6cc);
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #2a1206;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.identityArrow:hover {
+  transform: translateY(-2px);
+}
+.identityArrow:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #2a1206;
+}
+.identityAvatar {
+  width: 110px;
+  height: 110px;
+  filter: drop-shadow(5px 5px 0 #2a1206);
+  animation: var(--kf-bob) 3.2s ease-in-out infinite;
+}
+.identityLabel {
+  display: block;
+  font-weight: 900;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #8a5a2e;
+  margin-bottom: 6px;
+}
+.identityInput {
+  width: 100%;
+  font-family: Nunito, sans-serif;
+  font-weight: 800;
+  font-size: 17px;
+  padding: 13px 16px;
+  border-radius: 16px;
+  border: 4px solid #2a1206;
+  background: #fff6ec;
+  box-shadow: inset 3px 3px 0 rgba(42, 18, 6, 0.08);
+  outline: none;
+  transition: all 0.15s;
+}
+.identityInput:focus {
+  background: #fff;
+  box-shadow: inset 3px 3px 0 rgba(214, 38, 111, 0.18);
+}
+.charCount {
+  text-align: right;
+  font-weight: 800;
+  font-size: 11px;
+  color: #a06a3c;
+  margin-top: 5px;
+}

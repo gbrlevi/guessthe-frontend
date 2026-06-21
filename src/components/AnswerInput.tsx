@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useGame } from "../context/GameContext";
 import styles from "./AnswerInput.module.css";
 
 const API = import.meta.env.VITE_API_URL;
 
 export function AnswerInput() {
-  const { submitAnswer, answered, submitting, answerResult, autocompleteEnabled, category } = useGame();
+  const { submitAnswer, answered, submitting, answerResult, autocompleteEnabled, category, timeLeft } =
+    useGame();
   const [guess, setGuess] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1); // sugestão destacada (teclado)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +44,7 @@ export function AnswerInput() {
         const data: string[] = await r.json();
         setSuggestions(data);
         setShowSuggestions(data.length > 0);
+        setActiveIndex(-1); // reseta o destaque a cada nova lista
       } catch {
         setSuggestions([]);
       }
@@ -60,9 +63,31 @@ export function AnswerInput() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const pickSuggestion = (s: string) => {
-    setGuess(s);
+  // Escolher uma sugestão = enviá-la imediatamente (quiz de velocidade).
+  const chooseSuggestion = (s: string) => {
     setShowSuggestions(false);
+    setActiveIndex(-1);
+    setGuess("");
+    submitAnswer(s);
+  };
+
+  // Navegação por teclado no dropdown: ↑/↓ percorre, Enter escolhe, Esc fecha.
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (i - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault(); // impede o submit do form: enviamos a sugestão destacada
+      chooseSuggestion(suggestions[activeIndex]);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setShowSuggestions(false);
+      setActiveIndex(-1);
+    }
   };
 
   const onSubmit = (e: FormEvent) => {
@@ -78,32 +103,56 @@ export function AnswerInput() {
   if (answered) {
     return (
       <div className={styles.bar}>
-        <div className={`${styles.feedback} ${answerResult ? styles.correct : styles.wrong}`}>
+        <div
+          className={`${styles.feedback} ${answerResult ? styles.correct : styles.wrong}`}
+          role="status"
+          aria-live="polite"
+        >
           {answerResult ? "✅ Acertou! Aguardando fim do round…" : "❌ Errou. Aguardando fim do round…"}
         </div>
       </div>
     );
   }
 
+  const showAutoHint = guess.trim().length > 0 && timeLeft != null && timeLeft <= 5;
+
   return (
     <form className={styles.bar} onSubmit={onSubmit}>
       <div className={styles.inner}>
         <div className={styles.autocompleteWrap} ref={wrapperRef}>
+          {showAutoHint && (
+            <div className={styles.autoHint} role="status" aria-live="polite">
+              ⏳ Seu palpite atual será enviado ao acabar o tempo
+            </div>
+          )}
           <input
             className={styles.input}
             autoFocus
             value={guess}
             onChange={(e) => setGuess(e.target.value)}
+            onKeyDown={onKeyDown}
             onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="Digite seu palpite e aperte Enter…"
             maxLength={60}
             disabled={submitting}
             autoComplete="off"
+            role="combobox"
+            aria-expanded={showSuggestions}
+            aria-autocomplete="list"
+            aria-activedescendant={activeIndex >= 0 ? `suggestion-${activeIndex}` : undefined}
           />
           {showSuggestions && (
-            <ul className={styles.dropdown}>
-              {suggestions.map((s) => (
-                <li key={s} onMouseDown={() => pickSuggestion(s)}>
+            <ul className={styles.dropdown} role="listbox">
+              {suggestions.map((s, i) => (
+                <li
+                  key={s}
+                  id={`suggestion-${i}`}
+                  role="option"
+                  aria-selected={i === activeIndex}
+                  className={i === activeIndex ? styles.activeItem : undefined}
+                  onMouseEnter={() => setActiveIndex(i)}
+                  onMouseDown={() => chooseSuggestion(s)}
+                >
                   {s}
                 </li>
               ))}

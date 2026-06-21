@@ -1,10 +1,23 @@
 import { useEffect, useState } from "react";
 import { Avatar } from "../components/Avatar";
 import { CatIcon } from "../components/CatIcon";
-import { EyesIcon, GridIcon, CopyIcon, CheckIcon, SparkleIcon } from "../components/icons";
-import type { AvatarKind } from "../constants/avatars";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { SoundToggle } from "../components/SoundToggle";
+import { Toggle } from "../components/Toggle";
+import {
+  EyesIcon,
+  GridIcon,
+  CopyIcon,
+  CheckIcon,
+  SparkleIcon,
+  ExitIcon,
+  PencilIcon,
+  FatArrowIcon,
+} from "../components/icons";
+import { AVATAR_KINDS, type AvatarKind } from "../constants/avatars";
 import { getCategoryMeta } from "../constants/categoryMeta";
 import { useGame } from "../context/GameContext";
+import { sfx } from "../lib/sfx";
 import styles from "./Lobby.module.css";
 
 const API = import.meta.env.VITE_API_URL;
@@ -29,13 +42,46 @@ const DEFAULT_CONFIG: GameConfig = {
 };
 
 export function Lobby() {
-  const { code, isHost, players, startGame, error, settings, autocompleteEnabled } = useGame();
+  const {
+    code,
+    isHost,
+    players,
+    startGame,
+    error,
+    settings,
+    autocompleteEnabled,
+    myId,
+    myAvatar,
+    myName,
+    leaveRoom,
+    changeIdentity,
+  } = useGame();
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [rounds, setRounds] = useState(10);
   const [config, setConfig] = useState<GameConfig>(DEFAULT_CONFIG);
   const [showConfig, setShowConfig] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showLeave, setShowLeave] = useState(false);
+  const [showIdentity, setShowIdentity] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [draftAvatarIndex, setDraftAvatarIndex] = useState(0);
+
+  const draftAvatar = AVATAR_KINDS[draftAvatarIndex] as AvatarKind;
+  const prevDraftAvatar = () =>
+    setDraftAvatarIndex((i) => (i - 1 + AVATAR_KINDS.length) % AVATAR_KINDS.length);
+  const nextDraftAvatar = () => setDraftAvatarIndex((i) => (i + 1) % AVATAR_KINDS.length);
+
+  const openIdentity = () => {
+    setDraftName(myName);
+    const idx = AVATAR_KINDS.indexOf(myAvatar);
+    setDraftAvatarIndex(idx >= 0 ? idx : 0);
+    setShowIdentity(true);
+  };
+  const saveIdentity = () => {
+    changeIdentity(draftName.trim() || myName || "Jogador", draftAvatar);
+    setShowIdentity(false);
+  };
 
   useEffect(() => {
     fetch(`${API}/categories`)
@@ -110,17 +156,41 @@ export function Lobby() {
                 Jogadores <span className={styles.countBadge}>{players.length}</span>
               </h3>
               <div className={styles.playersListCard}>
-                {players.map((p) => (
-                  <div key={p.id} className={styles.playerRow}>
-                    <div className={styles.playerRowAvatar}>
-                      <Avatar kind={(p.avatar as AvatarKind) || "fox"} />
+                {players.map((p) => {
+                  const isMe = p.id === myId;
+                  const inner = (
+                    <>
+                      <div className={styles.playerRowAvatar}>
+                        <Avatar kind={(p.avatar as AvatarKind) || "fox"} />
+                      </div>
+                      <span className={styles.playerRowName}>{p.name}</span>
+                      <div className={styles.playerRowTags}>
+                        {p.is_host && <span className={styles.hostTag}>host</span>}
+                        {isMe && <span className={styles.meTag}>você</span>}
+                        {isMe && (
+                          <span className={styles.editHint} aria-hidden="true">
+                            <PencilIcon size={13} />
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  );
+                  return isMe ? (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`${styles.playerRow} ${styles.playerRowMe}`}
+                      onClick={openIdentity}
+                      title="Editar seu nick e avatar"
+                    >
+                      {inner}
+                    </button>
+                  ) : (
+                    <div key={p.id} className={styles.playerRow}>
+                      {inner}
                     </div>
-                    <span className={styles.playerRowName}>{p.name}</span>
-                    <div className={styles.playerRowTags}>
-                      {p.is_host && <span className={styles.hostTag}>host</span>}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -162,7 +232,10 @@ export function Lobby() {
 
                   <button
                     className={styles.startBtn}
-                    onClick={() => startGame(selected, rounds, config)}
+                    onClick={() => {
+                      sfx.click();
+                      startGame(selected, rounds, config);
+                    }}
                   >
                     Iniciar partida →
                   </button>
@@ -206,6 +279,22 @@ export function Lobby() {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Rodapé do painel: som + sair da sala */}
+            <div className={styles.sidebarFooter}>
+              <SoundToggle />
+              <button
+                type="button"
+                className={styles.leaveBtn}
+                onClick={() => {
+                  sfx.click();
+                  setShowLeave(true);
+                }}
+              >
+                <ExitIcon size={16} />
+                Sair da sala
+              </button>
             </div>
           </div>
 
@@ -292,6 +381,7 @@ export function Lobby() {
               <span>Duração do round</span>
               <div className={styles.configInputGroup}>
                 <input
+                  className={styles.range}
                   type="range"
                   min={5}
                   max={120}
@@ -303,41 +393,41 @@ export function Lobby() {
               </div>
             </label>
 
-            <label className={styles.configRow}>
+            <div className={styles.configRow}>
               <span>
                 Múltiplas tentativas
                 <small className={styles.configSmall}>Permite errar e tentar novamente até acabar o tempo</small>
               </span>
-              <input
-                type="checkbox"
+              <Toggle
                 checked={config.allowMultipleAttempts}
-                onChange={(e) => updateConfig("allowMultipleAttempts", e.target.checked)}
+                onChange={(v) => updateConfig("allowMultipleAttempts", v)}
+                label="Múltiplas tentativas"
               />
-            </label>
+            </div>
 
-            <label className={styles.configRow}>
+            <div className={styles.configRow}>
               <span>
                 Encerrar quando todos acertarem
                 <small className={styles.configSmall}>O round termina assim que o último jogador acerta</small>
               </span>
-              <input
-                type="checkbox"
+              <Toggle
                 checked={config.endOnAllCorrect}
-                onChange={(e) => updateConfig("endOnAllCorrect", e.target.checked)}
+                onChange={(v) => updateConfig("endOnAllCorrect", v)}
+                label="Encerrar quando todos acertarem"
               />
-            </label>
+            </div>
 
-            <label className={styles.configRow}>
+            <div className={styles.configRow}>
               <span>
                 Autocomplete
                 <small className={styles.configSmall}>Sugere respostas ao digitar 3+ letras</small>
               </span>
-              <input
-                type="checkbox"
+              <Toggle
                 checked={config.autocomplete}
-                onChange={(e) => updateConfig("autocomplete", e.target.checked)}
+                onChange={(v) => updateConfig("autocomplete", v)}
+                label="Autocomplete"
               />
-            </label>
+            </div>
 
             <button className={styles.modalClose} onClick={() => setShowConfig(false)}>
               Salvar e Fechar
@@ -345,6 +435,72 @@ export function Lobby() {
           </div>
         </div>
       )}
+
+      {/* Modal de edição de perfil (nick + avatar) — replica via WS sem reconectar */}
+      {showIdentity && (
+        <div className={styles.modalBackdrop} onClick={() => setShowIdentity(false)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2 className={styles.modalTitle}>Editar perfil</h2>
+
+            <div className={styles.identityCarousel}>
+              <button
+                type="button"
+                className={styles.identityArrow}
+                onClick={prevDraftAvatar}
+                aria-label="Avatar anterior"
+              >
+                <FatArrowIcon dir="left" size={24} />
+              </button>
+              <div className={styles.identityAvatar}>
+                <Avatar kind={draftAvatar} />
+              </div>
+              <button
+                type="button"
+                className={styles.identityArrow}
+                onClick={nextDraftAvatar}
+                aria-label="Próximo avatar"
+              >
+                <FatArrowIcon dir="right" size={24} />
+              </button>
+            </div>
+
+            <label className={styles.identityLabel} htmlFor="editNick">
+              Seu nick
+            </label>
+            <input
+              id="editNick"
+              className={styles.identityInput}
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              maxLength={24}
+              placeholder="Seu nick"
+            />
+            <div className={styles.charCount}>{draftName.length}/24</div>
+
+            <button className={styles.modalClose} onClick={saveIdentity}>
+              Salvar perfil
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        open={showLeave}
+        title="Sair da sala?"
+        message={
+          isHost
+            ? "Você é o host. Ao sair, outro jogador assume o controle da sala."
+            : "Você voltará para a tela inicial."
+        }
+        confirmLabel="Sair"
+        cancelLabel="Ficar"
+        tone="danger"
+        onConfirm={() => {
+          setShowLeave(false);
+          leaveRoom();
+        }}
+        onCancel={() => setShowLeave(false)}
+      />
     </div>
   );
 }
