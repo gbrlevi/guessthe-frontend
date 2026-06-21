@@ -9,7 +9,109 @@
   min-height: 100vh;
 }
 
+/* page layout wrapper: logo + card stacked */
+.pageLayout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 1040px;
+}
+
+/* logo F — tipografia em split */
+.logo {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 8px 40px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.logoWordmark {
+  display: flex;
+  align-items: baseline;
+}
+
+.logoLdk {
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 80px;
+  line-height: 1;
+  color: #ffffff;
+  letter-spacing: 2px;
+  text-shadow: 5px 5px 0 #2a1206, 4px 4px 0 #2a1206, 3px 3px 0 #2a1206;
+}
+
+.logoQuiz {
+  display: inline-block;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 80px;
+  line-height: 1;
+  color: #d6266f;
+  letter-spacing: 2px;
+  text-shadow: 5px 5px 0 #2a1206, 4px 4px 0 #2a1206, 3px 3px 0 #2a1206;
+  animation: var(--kf-wobble) 4s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.logoDivider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.logoDividerLine {
+  flex: 1;
+  height: 5px;
+  background: #2a1206;
+  border-radius: 3px;
+}
+
+.logoQuizPill {
+  background: #d6266f;
+  border: 4px solid #2a1206;
+  border-radius: 999px;
+  padding: 7px 22px;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  color: #ffc62e;
+  letter-spacing: 2px;
+  box-shadow: 4px 4px 0 #2a1206;
+}
+
+.logoTagline {
+  font-family: Nunito, sans-serif;
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(42, 18, 6, 0.65);
+  margin-top: 2px;
+}
+
+.logoSparkles {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
 .card {
+  position: relative;
+  z-index: 2;
   width: 100%;
   max-width: 1040px;
   min-height: 580px;
@@ -51,19 +153,16 @@
   right: -15px;
 }
 .ribbonInner {
-  position: relative;
-  z-index: 1;
-  background: linear-gradient(180deg, #ec5c9b, #d6266f);
+  background: #d6266f;
   border: 4px solid #2a1206;
-  border-radius: 18px;
-  padding: 12px 40px;
+  border-radius: 999px;
+  padding: 10px 36px;
   box-shadow: 5px 5px 0 #2a1206;
   font-family: Fredoka, sans-serif;
   font-weight: 700;
   font-size: 30px;
   color: #ffc62e;
-  text-shadow: 2px 2px 0 #2a1206;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   animation: var(--kf-wobble) 4s ease-in-out infinite;
 }
 
@@ -618,5 +717,14 @@
   }
   .card {
     min-height: auto;
+  }
+  .logoLdk {
+    font-size: 56px;
+  }
+  .logoQuiz {
+    font-size: 56px;
+  }
+  .logo {
+    padding: 6px 24px 12px;
   }
 }

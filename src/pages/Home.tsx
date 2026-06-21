@@ -81,15 +81,28 @@ export function Home() {
   return (
     <div className={styles.screen}>
       <SoundToggle className={styles.homeSound} />
-      <div className={styles.card}>
-        {/* ribbon */}
-        <div className={styles.ribbon}>
-          <div className={styles.ribbonWrap}>
-            <span className={`${styles.ribbonCorner} ${styles.ribbonCornerLeft}`} />
-            <span className={`${styles.ribbonCorner} ${styles.ribbonCornerRight}`} />
-            <div className={styles.ribbonInner}>JOGAR</div>
-          </div>
+      <div className={styles.pageLayout}>
+      {/* Logo — LDKQuiz wordmark */}
+      <div className={styles.logo}>
+        <div className={styles.logoWordmark}>
+          <span className={styles.logoLdk}>LDK</span>
+          <span className={styles.logoQuiz}>Quiz</span>
         </div>
+        <div className={styles.logoTagline}>TEKKID · games · MUNDO ANIME</div>
+        <div className={styles.logoSparkles}>
+          <svg width="22" height="22" viewBox="0 0 24 24">
+            <path d="M12,2 l2.4,6 6,2.4 -6,2.4 -2.4,6 -2.4,-6 -6,-2.4 6,-2.4 Z" fill="#FFC62E" stroke="#2A1206" strokeWidth="2" strokeLinejoin="round" />
+          </svg>
+          <svg width="16" height="16" viewBox="0 0 24 24">
+            <path d="M12,2 l2.4,6 6,2.4 -6,2.4 -2.4,6 -2.4,-6 -6,-2.4 6,-2.4 Z" fill="#FFFFFF" stroke="#2A1206" strokeWidth="2" strokeLinejoin="round" />
+          </svg>
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path d="M12,2 l2.4,6 6,2.4 -6,2.4 -2.4,6 -2.4,-6 -6,-2.4 6,-2.4 Z" fill="#3FBF63" stroke="#2A1206" strokeWidth="2" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
+
+      <div className={styles.card}>
 
         {view === "home" ? (
           <div className={`${styles.homeContent} ${styles.fadeContainer}`}>
@@ -130,7 +143,7 @@ export function Home() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   maxLength={24}
-                  placeholder="Ex: RaposaVeloz"
+                  placeholder="Ex: QifiShiina"
                 />
                 <div className={styles.nickCount}>{name.length}/24</div>
               </div>
@@ -146,7 +159,7 @@ export function Home() {
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}
                   maxLength={50}
-                  placeholder="Ex: Sala dos Ninjas"
+                  placeholder="Ex: LDKRUST RUIM"
                 />
 
                 <div className={styles.buttonGroup}>
@@ -264,6 +277,7 @@ export function Home() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
