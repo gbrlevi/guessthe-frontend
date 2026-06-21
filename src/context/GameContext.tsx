@@ -4,6 +4,7 @@ import {
   useContext,
   useMemo,
   useState,
+  useEffect,
   type ReactNode,
 } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
@@ -347,6 +348,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setChatMessages([]);
     setPrefetchVideoUrl(null);
   }, [disconnect]);
+
+  // Se o WebSocket desconectar e o jogador não estiver na tela inicial, limpa o estado e alerta o usuário
+  useEffect(() => {
+    if (status === "closed" && phase !== "home") {
+      setError("Conexão perdida com o servidor.");
+      leaveRoom();
+    }
+  }, [status, phase, leaveRoom]);
 
   // Troca de identidade (nick/avatar) sem reconectar — o servidor já aceita
   // `join` com name/avatar e replica via lobby_update para todos.
