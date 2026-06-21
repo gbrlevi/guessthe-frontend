@@ -19,6 +19,7 @@ export function AudioPlayer({ src, autoPlay = true }: { src: string; autoPlay?: 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0..1
+  const [failed, setFailed] = useState(false);
   const [volume, setVolume] = useState(() => {
     try {
       const saved = localStorage.getItem("ldk-media-volume");
@@ -57,6 +58,7 @@ export function AudioPlayer({ src, autoPlay = true }: { src: string; autoPlay?: 
     const el = audioRef.current;
     if (!el) return;
     setProgress(0);
+    setFailed(false);
     el.muted = sfx.isMuted();
     el.volume = volume;
     el.load();
@@ -106,6 +108,7 @@ export function AudioPlayer({ src, autoPlay = true }: { src: string; autoPlay?: 
           title="Volume"
         />
       </div>
+      {failed && <div className={styles.error}>🔇 Áudio indisponível</div>}
       <audio
         ref={audioRef}
         src={url}
@@ -113,6 +116,12 @@ export function AudioPlayer({ src, autoPlay = true }: { src: string; autoPlay?: 
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => setPlaying(false)}
+        onError={() => {
+          const el = audioRef.current;
+          console.error("AudioPlayer: falha ao carregar/tocar áudio", url, el?.error);
+          setFailed(true);
+          setPlaying(false);
+        }}
         onTimeUpdate={(e) => {
           const el = e.currentTarget;
           if (el.duration && isFinite(el.duration)) setProgress(el.currentTime / el.duration);

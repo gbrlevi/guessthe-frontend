@@ -55,6 +55,19 @@
   transition: width 0.2s linear;
 }
 
+/* Mensagem quando a faixa não carrega (erro de rede/formato) */
+.error {
+  flex: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2a1206;
+  background: rgba(255, 84, 54, 0.18);
+  border: 2px solid #2a1206;
+  border-radius: 8px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+
 /* Slider de volume */
 .volumeSlider {
   width: 100%;

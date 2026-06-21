@@ -3,18 +3,21 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   useEffect,
   type ReactNode,
 } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { sfx } from "../lib/sfx";
+import loadingQuizUrl from "../assets/loading_quiz.wav";
 import type { AvatarKind } from "../constants/avatars";
 import type {
   ChatMessage,
   GamePhase,
   MediaPayload,
   PlayerPublic,
+  QuestionStart,
   RankEntry,
   RoomSettings,
   RoundResult,
@@ -158,6 +161,44 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // URL opaca do vídeo pré-buscada durante o palpite (não exposta no contexto público)
   const [prefetchVideoUrl, setPrefetchVideoUrl] = useState<string | null>(null);
 
+  // Música da tela "a partida vai começar". A primeira pergunta só entra quando
+  // essa faixa termina de tocar: se o servidor mandar question_start antes do
+  // fim, guardamos a mensagem e a aplicamos no evento "ended" do áudio.
+  const loadingAudioRef = useRef<HTMLAudioElement | null>(null);
+  const pendingQuestionRef = useRef<QuestionStart | null>(null);
+
+  const applyQuestionStart = useCallback((msg: QuestionStart) => {
+    setRound(msg.round);
+    setTotalRounds(msg.total_rounds);
+    setCategory(msg.category);
+    setMediaType(msg.media_type);
+    setDuration(msg.duration);
+    setMedia(msg.media);
+    setTimeLeft(Math.round(msg.duration));
+    setAnswered(false);
+    setSubmitting(false);
+    setAnswerResult(null);
+    setRevealAnswer(null);
+    setRevealResults([]);
+    setPaused(false);
+    setChatMessages([]);
+    // pré-busca o vídeo do reveal (URL opaca) já durante o palpite, sem bloquear
+    setPrefetchVideoUrl(msg.prefetch_url ? `${API}${msg.prefetch_url}` : null);
+    setPhase("question");
+  }, []);
+
+  // Para a música da tela de início (saída/limpeza) e descarta qualquer
+  // pergunta que estivesse aguardando o fim da faixa.
+  const stopLoadingMusic = useCallback(() => {
+    pendingQuestionRef.current = null;
+    const audio = loadingAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.src = "";
+      loadingAudioRef.current = null;
+    }
+  }, []);
+
   const handleMessage = useCallback((msg: ServerMessage) => {
     switch (msg.type) {
       case "joined":
@@ -170,30 +211,36 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setSettings(msg.settings);
         if (msg.state === "lobby") setPhase("lobby");
         break;
-      case "game_starting":
+      case "game_starting": {
         setTotalRounds(msg.total_rounds);
         setRanking([]);
         setChatMessages([]);
         setPhase("starting");
+        // Toca a música de abertura; a partida só começa quando ela terminar.
+        stopLoadingMusic();
+        const audio = new Audio(loadingQuizUrl);
+        audio.muted = sfx.isMuted();
+        loadingAudioRef.current = audio;
+        const flush = () => {
+          if (loadingAudioRef.current !== audio) return; // já substituído/parado
+          loadingAudioRef.current = null;
+          const pending = pendingQuestionRef.current;
+          pendingQuestionRef.current = null;
+          if (pending) applyQuestionStart(pending);
+        };
+        audio.addEventListener("ended", flush);
+        audio.addEventListener("error", flush);
+        // Se o autoplay for bloqueado, não trava a partida: começa imediatamente.
+        audio.play().catch(flush);
         break;
+      }
       case "question_start":
-        setRound(msg.round);
-        setTotalRounds(msg.total_rounds);
-        setCategory(msg.category);
-        setMediaType(msg.media_type);
-        setDuration(msg.duration);
-        setMedia(msg.media);
-        setTimeLeft(Math.round(msg.duration));
-        setAnswered(false);
-        setSubmitting(false);
-        setAnswerResult(null);
-        setRevealAnswer(null);
-        setRevealResults([]);
-        setPaused(false);
-        setChatMessages([]);
-        // pré-busca o vídeo do reveal (URL opaca) já durante o palpite, sem bloquear
-        setPrefetchVideoUrl(msg.prefetch_url ? `${API}${msg.prefetch_url}` : null);
-        setPhase("question");
+        // Se a música de abertura ainda está tocando, segura a pergunta até o fim.
+        if (loadingAudioRef.current && !loadingAudioRef.current.ended) {
+          pendingQuestionRef.current = msg;
+        } else {
+          applyQuestionStart(msg);
+        }
         break;
       case "reveal_update":
         setMedia(msg.media);
@@ -246,7 +293,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setError(msg.message);
         break;
     }
-  }, []);
+  }, [applyQuestionStart, stopLoadingMusic]);
 
   const { status, connect, send, disconnect } = useWebSocket(handleMessage);
 
@@ -357,6 +404,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // restaura todo o estado para a tela inicial.
   const leaveRoom = useCallback(() => {
     disconnect();
+    stopLoadingMusic();
     setPhase("home");
     setError(null);
     setCode(null);
@@ -378,7 +426,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setRanking([]);
     setChatMessages([]);
     setPrefetchVideoUrl(null);
-  }, [disconnect]);
+  }, [disconnect, stopLoadingMusic]);
 
   // Se o WebSocket desconectar e o jogador não estiver na tela inicial, limpa o estado e alerta o usuário
   useEffect(() => {

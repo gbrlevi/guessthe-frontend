@@ -53,6 +53,7 @@ export function Home() {
   const [rooms, setRooms] = useState<LiveRoom[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [view, setView] = useState<"home" | "rooms">("home");
+  const [pendingRoomCode, setPendingRoomCode] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const avatarKind = AVATAR_KINDS[avatarIndex] as AvatarKind;
@@ -105,10 +106,17 @@ export function Home() {
 
   const handleJoinRoom = (roomCode: string) => {
     if (!name.trim()) {
-      setCode(roomCode);
+      setPendingRoomCode(roomCode);
       return;
     }
     joinRoom(roomCode, name.trim(), avatarKind);
+  };
+
+  const handleModalConfirm = () => {
+    if (name.trim() && pendingRoomCode) {
+      joinRoom(pendingRoomCode, name.trim(), avatarKind);
+      setPendingRoomCode(null);
+    }
   };
 
   return (
@@ -312,6 +320,50 @@ export function Home() {
         )}
       </div>
       </div>
+
+      {pendingRoomCode && (
+        <div className={styles.modalOverlay} onClick={() => setPendingRoomCode(null)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <SparkleIcon size={18} />
+              <span className={styles.modalTitle}>Falta só o seu nick!</span>
+            </div>
+            <p className={styles.modalBody}>
+              Escolha um nickname antes de entrar na sala{" "}
+              <strong>{pendingRoomCode}</strong>.
+            </p>
+            <label className={styles.nickLabel} htmlFor="modal-nick">
+              Seu nick
+            </label>
+            <input
+              id="modal-nick"
+              className={styles.nickInput}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleModalConfirm()}
+              maxLength={24}
+              placeholder="Ex: QifiShiina"
+              autoFocus
+            />
+            <div className={styles.nickCount}>{name.length}/24</div>
+            <div className={styles.modalActions}>
+              <button
+                className={styles.primaryBtn}
+                disabled={!name.trim()}
+                onClick={handleModalConfirm}
+              >
+                Entrar na sala →
+              </button>
+              <button
+                className={styles.backBtn}
+                onClick={() => setPendingRoomCode(null)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
