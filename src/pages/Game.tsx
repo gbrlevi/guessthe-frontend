@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnswerInput } from "../components/AnswerInput";
+import { Avatar } from "../components/Avatar";
 import { CatIcon } from "../components/CatIcon";
 import { Confetti } from "../components/Confetti";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -8,13 +9,21 @@ import { Leaderboard } from "../components/Leaderboard";
 import { MediaArea } from "../components/MediaArea";
 import { Scoreboard } from "../components/Scoreboard";
 import { ScorerList } from "../components/ScorerList";
+import { MusicVolume } from "../components/MusicVolume";
 import { SoundToggle } from "../components/SoundToggle";
+import { TensionInterstitial } from "../components/TensionInterstitial";
 import { Timer } from "../components/Timer";
+import { Vignette } from "../components/Vignette";
+import type { AvatarKind } from "../constants/avatars";
 import { CheckIcon, ExitIcon, SparkleIcon } from "../components/icons";
 import { getCategoryMeta } from "../constants/categoryMeta";
 import { useGame } from "../context/GameContext";
+import { fireSideConfetti } from "../lib/confetti";
 import { sfx } from "../lib/sfx";
 import styles from "./Game.module.css";
+
+// Janela de pânico do Modo Tensão: vinheta vermelha nos últimos 10s.
+const PANIC_WINDOW = 10;
 
 export function Game() {
   const {
@@ -28,7 +37,9 @@ export function Game() {
     revealResults,
     ranking,
     players,
+    myId,
     isHost,
+    isTension,
     backToLobby,
     leaveRoom,
     paused,
@@ -38,6 +49,23 @@ export function Game() {
 
   const meta = getCategoryMeta(category);
   const [showLeave, setShowLeave] = useState(false);
+
+  // Resultado do jogador local nesta rodada (autoritativo do servidor).
+  const myResult = revealResults.find((r) => r.id === myId);
+  const myCorrect = !!myResult?.correct;
+
+  // Confete lateral no acerto — dispara uma única vez por reveal.
+  const confettiRoundRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (phase === "reveal" && myCorrect && confettiRoundRef.current !== round) {
+      confettiRoundRef.current = round;
+      fireSideConfetti();
+    }
+  }, [phase, myCorrect, round]);
+
+  // Vinheta de pânico: últimos PANIC_WINDOW segundos de uma rodada de tensão.
+  const panic =
+    phase === "question" && isTension && !paused && timeLeft != null && timeLeft <= PANIC_WINDOW;
 
   const exitBtn = (
     <button
@@ -64,6 +92,20 @@ export function Game() {
           <span className={styles.startingEmoji}>🎬</span>
           A partida vai começar…
         </div>
+        {/* Avatares "pulsam" no ritmo da percussão da intro (ldk-beat ~1s). */}
+        {players.length > 0 && (
+          <div className={styles.startingAvatars}>
+            {players.map((p, i) => (
+              <div
+                key={p.id}
+                className={styles.startingAvatar}
+                style={{ animationDelay: `${(i * 0.08).toFixed(2)}s` }}
+              >
+                <Avatar kind={(p.avatar as AvatarKind) || "fox"} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   } else if (phase === "scoreboard") {
@@ -100,6 +142,16 @@ export function Game() {
             </div>
           </div>
 
+          {/* Veredito pessoal: acerto pisca dourado/verde; erro treme + borda vermelha. */}
+          {myResult && (
+            <div
+              key={`verdict-${round}`}
+              className={`${styles.myVerdict} ${myCorrect ? styles.myVerdictCorrect : styles.myVerdictWrong}`}
+            >
+              {myCorrect ? "✓ Você acertou!" : "✗ Não foi dessa vez"}
+            </div>
+          )}
+
           <div className={styles.revealGrid}>
             <div className={styles.answerCard}>
               <div className={styles.answerMedia}>
@@ -124,7 +176,7 @@ export function Game() {
               </div>
               <div className={styles.scorersBody}>
                 {scorers.length > 0 ? (
-                  <ScorerList entries={scorers} />
+                  <ScorerList entries={scorers} myId={myId} celebrateMine={myCorrect} />
                 ) : (
                   <div className={styles.emptyScorers}>Ninguém pontuou desta vez 😅</div>
                 )}
@@ -175,6 +227,7 @@ export function Game() {
           </div>
 
           <div className={styles.headerRight}>
+            <MusicVolume />
             <SoundToggle />
             {isHost && (
               <button
@@ -218,10 +271,14 @@ export function Game() {
       {/* Em fases sem header próprio, mostra os controles flutuantes (som + sair). */}
       {phase !== "question" && (
         <div className={styles.topControls}>
+          <MusicVolume />
           <SoundToggle />
           {exitBtn}
         </div>
       )}
+      {/* Overlays globais do Modo Tensão (sobre qualquer fase). */}
+      <Vignette active={panic} />
+      <TensionInterstitial />
       <ConfirmDialog
         open={showLeave}
         title="Sair da partida?"

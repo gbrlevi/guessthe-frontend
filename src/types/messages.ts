@@ -28,6 +28,8 @@ export interface RoomSettings {
   allow_multiple_attempts: boolean;
   end_on_all_correct: boolean;
   depixel_speed: number;
+  tension_enabled: boolean;
+  tension_ratio: number;
 }
 
 export interface RankEntry {
@@ -135,6 +137,20 @@ export interface CloseAnswer {
   type: "close_answer";
 }
 
+/**
+ * Interstício do Modo Tensão — enviado pelo servidor ANTES da primeira rodada
+ * dos últimos 30%. O cliente trava a tela com um overlay por `interstitial_ms`
+ * (o servidor só dispara o `question_start` seguinte após esse tempo, então o
+ * cronômetro do round não corre durante o overlay). `ranking` traz o Top atual.
+ */
+export interface TensionIntro {
+  type: "tension_intro";
+  round: number;
+  total_rounds: number;
+  interstitial_ms: number;
+  ranking: RankEntry[];
+}
+
 export type ServerMessage =
   | LobbyUpdate
   | Joined
@@ -149,7 +165,8 @@ export type ServerMessage =
   | RoundResumed
   | ChatMessage
   | ErrorMsg
-  | CloseAnswer;
+  | CloseAnswer
+  | TensionIntro;
 
 // ---- Mensagens cliente -> servidor ----
 
@@ -172,6 +189,8 @@ export type ClientMessage =
       allow_multiple_attempts?: boolean;
       end_on_all_correct?: boolean;
       depixel_speed?: number;
+      tension_enabled?: boolean;
+      tension_ratio?: number;
     }
   | { type: "submit_answer"; guess: string }
   | { type: "pause_round" }

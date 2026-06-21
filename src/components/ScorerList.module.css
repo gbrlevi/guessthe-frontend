@@ -18,6 +18,15 @@
   background: #fff3d6;
   border-color: #f2a600;
 }
+/* linha do jogador local — anel de destaque sutil */
+.rowMine {
+  outline: 3px solid #d6266f;
+  outline-offset: 2px;
+}
+/* flash dourado/verde quando o jogador local acertou (reveal) */
+.rowFlash {
+  animation: var(--kf-pop) 0.5s ease both, var(--kf-flash-gold) 1.1s ease 0.1s 1;
+}
 .rank {
   width: 28px;
   height: 28px;

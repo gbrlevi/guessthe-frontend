@@ -692,6 +692,10 @@
   font-size: 15px;
   color: #2a1206;
 }
+.configRowDisabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
 .configSmall {
   display: block;
   font-weight: 700;

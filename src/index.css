@@ -28,6 +28,16 @@
   --kf-wobble: ldk-wobble;
   --kf-drift: ldk-drift;
   --kf-spin: ldk-spin;
+  /* Feedbacks de gameplay (erro/tensão/contagem). Mantemos os nomes pedidos na
+     spec (`shake`, `pulse-vignette`) e os expomos via var p/ não serem escopados
+     pelo CSS Modules quando referenciados nos *.module.css. */
+  --kf-shake: shake;
+  --kf-vignette: pulse-vignette;
+  --kf-beat: ldk-beat;
+  --kf-blink: ldk-blink;
+  --kf-flash-gold: ldk-flash-gold;
+  --kf-heartbeat: ldk-heartbeat;
+  --kf-fade-out: ldk-fade-out;
 }
 
 * {
@@ -167,4 +177,116 @@ input {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Erro no palpite: tremor horizontal rápido (translate3d p/ acelerar na GPU). */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translate3d(-7px, 0, 0);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translate3d(7px, 0, 0);
+  }
+}
+
+/* Vinheta de pânico: pulsa a opacidade de uma borda avermelhada (0% → 40%). */
+@keyframes pulse-vignette {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Batida da contagem regressiva inicial (avatares "pulsam" a cada segundo). */
+@keyframes ldk-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Texto piscando de forma agressiva no interstício do Modo Tensão. */
+@keyframes ldk-blink {
+  0%,
+  49% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.97);
+  }
+}
+
+/* Flash dourado/verde no card de quem acertou. */
+@keyframes ldk-flash-gold {
+  0% {
+    background: #fff3d6;
+    box-shadow: 0 0 0 0 rgba(63, 191, 99, 0);
+  }
+  30% {
+    background: #d9f7e2;
+    box-shadow: 0 0 0 6px rgba(63, 191, 99, 0.55);
+  }
+  100% {
+    background: #ffffff;
+    box-shadow: 3px 3px 0 #2a1206;
+  }
+}
+
+/* Fade-out genérico (saída de overlays). */
+@keyframes ldk-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* Batimento cardíaco sutil do overlay de interstício (opcional na spec). */
+@keyframes ldk-heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(1.04);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* ===========================================================================
+   MODO TENSÃO — tema global (laranja → grafite/preto, destaques vermelhos).
+   Ativado via classe em <body> (ver GameContext). A transição é suave.
+   =========================================================================== */
+body {
+  transition: background-color 0.6s ease;
+}
+body.tension-mode {
+  --bg: #15171c;
+  --ink: #2a1206;
+  background-color: #15171c;
+  background-image: radial-gradient(circle at 50% -10%, rgba(255, 45, 45, 0.16), transparent 55%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.04) 2px, transparent 2.6px),
+    radial-gradient(circle, rgba(0, 0, 0, 0.35) 2px, transparent 2.6px);
+  background-size: 140% 140%, 40px 40px, 40px 40px;
+  background-position: 0 0, 0 0, 20px 20px;
 }

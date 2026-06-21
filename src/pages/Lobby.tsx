@@ -33,6 +33,8 @@ interface GameConfig {
   endOnAllCorrect: boolean;
   autocomplete: boolean;
   depixelSpeed: number;
+  tensionEnabled: boolean;
+  tensionPercent: number; // % das rodadas finais em tensão (ex.: 30 → últimos 30%)
 }
 
 const DEFAULT_CONFIG: GameConfig = {
@@ -41,6 +43,8 @@ const DEFAULT_CONFIG: GameConfig = {
   endOnAllCorrect: true,
   autocomplete: true,
   depixelSpeed: 5,
+  tensionEnabled: true,
+  tensionPercent: 30,
 };
 
 export function Lobby() {
@@ -125,6 +129,8 @@ export function Lobby() {
       if (key === "allowMultipleAttempts") updateSettings({ allowMultipleAttempts: value as boolean });
       if (key === "endOnAllCorrect") updateSettings({ endOnAllCorrect: value as boolean });
       if (key === "depixelSpeed") updateSettings({ depixelSpeed: value as number });
+      if (key === "tensionEnabled") updateSettings({ tensionEnabled: value as boolean });
+      if (key === "tensionPercent") updateSettings({ tensionRatio: 1 - (value as number) / 100 });
       return next;
     });
   };
@@ -167,6 +173,10 @@ export function Lobby() {
   const activeEndAll = isHost ? config.endOnAllCorrect : (settings?.end_on_all_correct ?? true);
   const activeAutocomplete = isHost ? config.autocomplete : autocompleteEnabled;
   const activeDepixelSpeed = isHost ? config.depixelSpeed : (settings?.depixel_speed ?? 5);
+  const activeTensionEnabled = isHost ? config.tensionEnabled : (settings?.tension_enabled ?? true);
+  const activeTensionPercent = isHost
+    ? config.tensionPercent
+    : Math.round((1 - (settings?.tension_ratio ?? 0.7)) * 100);
 
   return (
     <div className={styles.screen}>
@@ -326,6 +336,12 @@ export function Lobby() {
                     <div className={styles.ruleItem}>
                       <span className={styles.ruleName}>Vel. despixelização</span>
                       <span className={styles.ruleVal}>{activeDepixelSpeed}/10</span>
+                    </div>
+                    <div className={styles.ruleItem}>
+                      <span className={styles.ruleName}>Modo Tensão</span>
+                      <span className={`${styles.ruleTag} ${activeTensionEnabled ? styles.tagOn : styles.tagOff}`}>
+                        {activeTensionEnabled ? `Ativo (${activeTensionPercent}%)` : "Inativo"}
+                      </span>
                     </div>
                   </div>
                   <div className={styles.guestWaiting}>
@@ -500,6 +516,38 @@ export function Lobby() {
                   onChange={(e) => updateConfig("depixelSpeed", Number(e.target.value))}
                 />
                 <span className={styles.configValue}>{config.depixelSpeed}</span>
+              </div>
+            </label>
+
+            <div className={styles.configRow}>
+              <span>
+                Modo Tensão
+                <small className={styles.configSmall}>Mudança no rítmo da partida. Rodadas finais valem pontuação dobrada</small>
+              </span>
+              <Toggle
+                checked={config.tensionEnabled}
+                onChange={(v) => updateConfig("tensionEnabled", v)}
+                label="Modo Tensão"
+              />
+            </div>
+
+            <label className={`${styles.configRow} ${!config.tensionEnabled ? styles.configRowDisabled : ""}`}>
+              <span>
+                Rodadas em tensão
+                <small className={styles.configSmall}>Percentual final da partida com Modo Tensão ativo</small>
+              </span>
+              <div className={styles.configInputGroup}>
+                <input
+                  className={styles.range}
+                  type="range"
+                  min={10}
+                  max={50}
+                  step={5}
+                  value={config.tensionPercent}
+                  disabled={!config.tensionEnabled}
+                  onChange={(e) => updateConfig("tensionPercent", Number(e.target.value))}
+                />
+                <span className={styles.configValue}>{config.tensionPercent}%</span>
               </div>
             </label>
 

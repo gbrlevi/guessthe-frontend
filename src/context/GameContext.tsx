@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { sfx } from "../lib/sfx";
+import { music } from "../lib/music";
 import loadingQuizUrl from "../assets/loading_quiz.wav";
 import type { AvatarKind } from "../constants/avatars";
 import type {
@@ -28,6 +29,14 @@ const API = import.meta.env.VITE_API_URL;
 const WS = import.meta.env.VITE_WS_URL;
 
 const MAX_CHAT_MESSAGES = 80;
+
+// Modo Tensão: por padrão os últimos 30% das rodadas (configurável pelo host).
+const TENSION_RATIO = 0.7;
+const isTensionRound = (round: number, total: number, ratio = TENSION_RATIO) =>
+  total > 0 && round > total * ratio;
+
+// Janela de "pânico": nos últimos N segundos a música acelera (1.0x → 1.5x).
+const PANIC_WINDOW = 10;
 
 interface GameState {
   phase: GamePhase;
@@ -58,6 +67,11 @@ interface GameState {
 
   autocompleteEnabled: boolean;
 
+  // Modo Tensão (últimos 30% das rodadas)
+  isTension: boolean;
+  tensionIntro: boolean; // overlay de interstício travando a tela
+  tensionRanking: RankEntry[]; // Top atual exibido no interstício
+
   revealAnswer: string | null;
   revealResults: RoundResult[];
   ranking: RankEntry[];
@@ -84,6 +98,8 @@ interface GameState {
     allowMultipleAttempts?: boolean;
     endOnAllCorrect?: boolean;
     depixelSpeed?: number;
+    tensionEnabled?: boolean;
+    tensionRatio?: number;
   }) => void;
   submitAnswer: (guess: string) => void;
   pauseRound: () => void;
@@ -155,6 +171,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [paused, setPaused] = useState(false);
   const [autocompleteEnabled, setAutocompleteEnabled] = useState(true);
 
+  const [tensionIntro, setTensionIntro] = useState(false);
+  const [tensionRanking, setTensionRanking] = useState<RankEntry[]>([]);
+
+  // Refs para as configs de tensão: permitem leitura dentro de callbacks com
+  // deps vazias (applyQuestionStart) sem fechar em valores stale.
+  const tensionEnabledRef = useRef(true);
+  const tensionRatioRef = useRef(TENSION_RATIO);
+  useEffect(() => {
+    if (settings) {
+      tensionEnabledRef.current = settings.tension_enabled;
+      tensionRatioRef.current = settings.tension_ratio;
+    }
+  }, [settings]);
+
+  // Derivado do estado autoritativo do servidor (round/totalRounds) + config do host.
+  const isTension =
+    (settings?.tension_enabled ?? true) &&
+    isTensionRound(round, totalRounds, settings?.tension_ratio ?? TENSION_RATIO);
+
   const [revealAnswer, setRevealAnswer] = useState<string | null>(null);
   const [revealResults, setRevealResults] = useState<RoundResult[]>([]);
   const [ranking, setRanking] = useState<RankEntry[]>([]);
@@ -194,9 +229,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setRevealResults([]);
     setPaused(false);
     setChatMessages([]);
+    setTensionIntro(false); // a rodada começou → libera a tela do interstício
     // pré-busca o vídeo do reveal (URL opaca) já durante o palpite, sem bloquear
     setPrefetchVideoUrl(msg.prefetch_url ? `${API}${msg.prefetch_url}` : null);
     setPhase("question");
+
+    // Trilha de fundo da rodada. Perguntas de áudio/vídeo (aberturas de anime)
+    // tocam silêncio musical p/ não competir com a mídia; senão ambiente normal
+    // ou tensão nas rodadas finais. (rate normaliza p/ 1.0 ao (re)iniciar a faixa.)
+    // Refs usados aqui p/ evitar closure stale (callback tem deps vazias).
+    const mediaHasSound = msg.media_type === "audio" || msg.media_type === "video";
+    if (mediaHasSound) {
+      music.play(null);
+    } else if (tensionEnabledRef.current && isTensionRound(msg.round, msg.total_rounds, tensionRatioRef.current)) {
+      music.play("tension");
+    } else {
+      music.play("ambient");
+    }
   }, []);
 
   // Para a música da tela de início (saída/limpeza) e descarta qualquer
@@ -227,11 +276,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setTotalRounds(msg.total_rounds);
         setRanking([]);
         setChatMessages([]);
+        setTensionIntro(false);
+        setTensionRanking([]);
         setPhase("starting");
         // Toca a música de abertura; a partida só começa quando ela terminar.
+        // Garante que nenhuma trilha de fundo siga tocando por cima.
+        music.stop();
         stopLoadingMusic();
         const audio = new Audio(loadingQuizUrl);
         audio.muted = sfx.isMuted();
+        audio.volume = music.getVolume();
         loadingAudioRef.current = audio;
         const flush = () => {
           if (loadingAudioRef.current !== audio) return; // já substituído/parado
@@ -285,6 +339,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
         clearTimeout(wrongSoundTimerRef.current); // cancela o erro adiado
         sfx.near(); // cue sonoro gentil reforçando o aviso "está próxima"
         break;
+      case "tension_intro":
+        // Calmaria antes da tempestade: trava a tela e silencia a música.
+        // O servidor só envia o próximo question_start após interstitial_ms,
+        // então o cronômetro do round NÃO corre durante o overlay.
+        setTensionRanking(msg.ranking);
+        setTensionIntro(true);
+        music.play(null); // fade-out imediato da faixa ambiente
+        break;
       case "reveal_answer":
         setRevealAnswer(msg.answer);
         setRevealResults(msg.results);
@@ -298,6 +360,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         );
         // o VideoPlayer assume com a MESMA URL (já em cache) → toca instantâneo
         setPrefetchVideoUrl(null);
+        music.setRate(1.0); // encerra o "pânico" — normaliza a velocidade da faixa
         setPhase("reveal");
         break;
       case "scoreboard":
@@ -306,7 +369,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         break;
       case "game_over":
         setRanking(msg.ranking);
+        setTensionIntro(false);
         setPhase("game_over");
+        music.stop(); // encerra a trilha de tensão com fade-out
         sfx.fanfare();
         break;
       case "round_paused":
@@ -402,6 +467,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       allowMultipleAttempts?: boolean;
       endOnAllCorrect?: boolean;
       depixelSpeed?: number;
+      tensionEnabled?: boolean;
+      tensionRatio?: number;
     }) => {
       send({
         type: "update_settings",
@@ -411,6 +478,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ...(patch.allowMultipleAttempts !== undefined && { allow_multiple_attempts: patch.allowMultipleAttempts }),
         ...(patch.endOnAllCorrect !== undefined && { end_on_all_correct: patch.endOnAllCorrect }),
         ...(patch.depixelSpeed !== undefined && { depixel_speed: patch.depixelSpeed }),
+        ...(patch.tensionEnabled !== undefined && { tension_enabled: patch.tensionEnabled }),
+        ...(patch.tensionRatio !== undefined && { tension_ratio: patch.tensionRatio }),
       });
     },
     [send],
@@ -437,6 +506,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const leaveRoom = useCallback(() => {
     disconnect();
     stopLoadingMusic();
+    music.stop();
+    setTensionIntro(false);
+    setTensionRanking([]);
     setPhase("home");
     setError(null);
     setCode(null);
@@ -469,6 +541,35 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [status, phase, leaveRoom]);
 
+  // PÂNICO (Modo Tensão): nos últimos PANIC_WINDOW segundos a faixa acelera
+  // linearmente de 1.0x até 1.5x conforme o tempo decresce. Fora dessa janela
+  // (ou fora da rodada de tensão) a velocidade permanece normal.
+  useEffect(() => {
+    if (phase !== "question" || !isTension || timeLeft == null) return;
+    if (timeLeft <= PANIC_WINDOW) {
+      const progress = (PANIC_WINDOW - timeLeft) / PANIC_WINDOW; // 0 → 1
+      music.setRate(1.0 + 0.5 * Math.min(1, Math.max(0, progress)));
+    } else {
+      music.setRate(1.0);
+    }
+  }, [phase, isTension, timeLeft]);
+
+  // Tema visual do Modo Tensão: injeta a classe global no <body> durante o
+  // gameplay das rodadas finais (laranja → grafite/preto + destaques vermelhos).
+  useEffect(() => {
+    const active = isTension && (phase === "question" || phase === "reveal" || phase === "scoreboard");
+    document.body.classList.toggle("tension-mode", active);
+  }, [isTension, phase]);
+
+  // Limpeza ao desmontar o provider: libera elementos de áudio/timers e remove
+  // o tema de tensão (evita vazamento de memória / classe órfã no <body>).
+  useEffect(() => {
+    return () => {
+      music.dispose();
+      document.body.classList.remove("tension-mode");
+    };
+  }, []);
+
   // Troca de identidade (nick/avatar) sem reconectar — o servidor já aceita
   // `join` com name/avatar e replica via lobby_update para todos.
   const changeIdentity = useCallback(
@@ -485,6 +586,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       phase, status, error, code, myId, isHost, myAvatar, myName, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, closeAnswer, paused, autocompleteEnabled,
+      isTension, tensionIntro, tensionRanking,
       revealAnswer, revealResults, ranking, chatMessages,
       createRoom, joinRoom, startGame, updateSettings, submitAnswer, pauseRound, resumeRound,
       backToLobby, leaveRoom, changeIdentity,
@@ -493,6 +595,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       phase, status, error, code, myId, isHost, myAvatar, myName, players, settings,
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, closeAnswer, paused, autocompleteEnabled,
+      isTension, tensionIntro, tensionRanking,
       revealAnswer, revealResults, ranking, chatMessages,
       createRoom, joinRoom, startGame, updateSettings, submitAnswer, pauseRound, resumeRound,
       backToLobby, leaveRoom, changeIdentity,
