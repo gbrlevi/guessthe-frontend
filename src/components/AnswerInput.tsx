@@ -36,6 +36,7 @@ export function AnswerInput() {
   const [pool, setPool] = useState<string[]>([]); // títulos da categoria (pré-carregados)
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const hasClosedManually = useRef(false);
 
   // Mantém o campo sempre "clicado": foca no início do round e devolve o foco
   // assim que ele volta a ser editável (após enviar/reabilitar), para o jogador
@@ -93,7 +94,9 @@ export function AnswerInput() {
       })
       .slice(0, MAX_SUGGESTIONS);
     setSuggestions(matches);
-    setShowSuggestions(matches.length > 0);
+    if (!hasClosedManually.current) {
+      setShowSuggestions(matches.length > 0);
+    }
     setActiveIndex(-1); // reseta o destaque a cada nova lista
   }, [guess, pool, autocompleteEnabled]);
 
@@ -102,6 +105,7 @@ export function AnswerInput() {
     const handler = (e: MouseEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
         setShowSuggestions(false);
+        hasClosedManually.current = true;
       }
     };
     document.addEventListener("mousedown", handler);
@@ -119,19 +123,21 @@ export function AnswerInput() {
   // Navegação por teclado no dropdown: setas percorrem, Enter escolhe, Esc fecha.
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!showSuggestions || suggestions.length === 0) return;
-    if (e.key === "ArrowDown") {
+    if (e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey)) {
       e.preventDefault();
       setActiveIndex((i) => (i + 1) % suggestions.length);
-    } else if (e.key === "ArrowUp") {
+    } else if (e.key === "ArrowUp" || (e.key === "Tab" && e.shiftKey)) {
       e.preventDefault();
-      setActiveIndex((i) => (i - 1 + suggestions.length) % suggestions.length);
-    } else if (e.key === "Enter" && activeIndex >= 0) {
-      e.preventDefault(); // impede o submit do form: enviamos a sugestão destacada
-      chooseSuggestion(suggestions[activeIndex]);
+      setActiveIndex((i) => (i <= 0 ? suggestions.length - 1 : i - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault(); // impede o submit do form: enviamos a sugestão destacada ou a primeira
+      const targetIndex = activeIndex >= 0 ? activeIndex : 0;
+      chooseSuggestion(suggestions[targetIndex]);
     } else if (e.key === "Escape") {
       e.preventDefault();
       setShowSuggestions(false);
       setActiveIndex(-1);
+      hasClosedManually.current = true;
     }
   };
 
@@ -183,9 +189,12 @@ export function AnswerInput() {
             className={styles.input}
             autoFocus
             value={guess}
-            onChange={(e) => setGuess(e.target.value)}
+            onChange={(e) => {
+              setGuess(e.target.value);
+              hasClosedManually.current = false;
+            }}
             onKeyDown={onKeyDown}
-            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+            onFocus={() => !hasClosedManually.current && suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="Digite seu palpite e aperte Enter…"
             maxLength={60}
             disabled={submitting}
