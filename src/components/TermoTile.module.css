@@ -1,0 +1,28 @@
+.tile {
+  display: grid;
+  place-items: center;
+  border: 3px solid;
+  border-radius: 10px;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0 var(--ink);
+  min-width: 0;
+}
+.lg {
+  width: 48px;
+  height: 48px;
+  font-size: clamp(16px, 4.5vw, 26px);
+}
+.md {
+  width: 34px;
+  height: 34px;
+  font-size: clamp(13px, 3.6vw, 20px);
+}
+.reveal {
+  animation: var(--kf-pop) 0.3s ease both;
+}
+
+:global(body.tension-mode) .tile {
+  box-shadow: 2px 2px 0 #000;
+}

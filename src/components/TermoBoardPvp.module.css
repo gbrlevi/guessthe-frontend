@@ -1,0 +1,137 @@
+.wrap {
+  display: flex;
+  gap: 22px;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+}
+.boardCol {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 7px;
+  /* respeita o padding do card pai em vez de usar vw absoluto */
+  width: 100%;
+  max-width: 460px;
+}
+
+/* painel lateral dos rivais (mini-grids censurados) */
+.oppPanel {
+  flex: none;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 55vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e7cdb0 transparent;
+}
+.oppPanel::-webkit-scrollbar {
+  width: 5px;
+}
+.oppPanel::-webkit-scrollbar-thumb {
+  background: #e7cdb0;
+  border-radius: 3px;
+}
+.oppTitle {
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0.75;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding-bottom: 4px;
+}
+:global(body.tension-mode) .oppTitle {
+  color: #f4efe9;
+  background: #1c1f26;
+}
+.oppCard {
+  background: #fafaf8;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+:global(body.tension-mode) .oppCard {
+  background: #1c1f26;
+  border-color: #0e0f12;
+  box-shadow: 3px 3px 0 #000;
+}
+.oppHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+}
+.oppAvatar {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+.oppName {
+  font-family: Nunito, sans-serif;
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:global(body.tension-mode) .oppName {
+  color: #f4efe9;
+}
+.oppGrid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 8px);
+  gap: 2px;
+  justify-content: start;
+}
+.block {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+/* mobile: painel de rivais vira carrossel horizontal abaixo do board */
+@media (max-width: 768px) {
+  .wrap {
+    flex-direction: column;
+    align-items: center;
+  }
+  .oppPanel {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: none;
+    gap: 10px;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: #e7cdb0 transparent;
+  }
+  .oppPanel::-webkit-scrollbar {
+    height: 5px;
+  }
+  .oppTitle {
+    display: none;
+  }
+  .oppCard {
+    flex-shrink: 0;
+    width: auto;
+    min-width: 100px;
+  }
+}

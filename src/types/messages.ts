@@ -7,6 +7,13 @@ export type GamePhase =
   | "scoreboard"
   | "game_over";
 
+// ---- Modo Termo ----
+export type GameMode = "quiz" | "termo" | "misto";
+export type TermoMode = "pvp_individual" | "tabuleiro_compartilhado";
+/** Cor de cada letra (estilo Wordle/Termo). "empty"/"filled" são estados locais
+ *  da grade (não vêm do servidor). */
+export type LetterColor = "correct" | "present" | "absent" | "empty" | "filled";
+
 export interface MediaPayload {
   kind: "image" | "audio" | "video" | "text";
   url?: string;
@@ -30,6 +37,13 @@ export interface RoomSettings {
   depixel_speed: number;
   tension_enabled: boolean;
   tension_ratio: number;
+  // Modo Termo
+  game_mode: GameMode;
+  termo_mode: TermoMode;
+  termo_round_duration: number;
+  submission_cooldown: number;
+  termo_hint_delay: number;
+  mixed_termo_ratio: number;
 }
 
 export interface RankEntry {
@@ -67,11 +81,20 @@ export interface QuestionStart {
   type: "question_start";
   round: number;
   total_rounds: number;
-  category: string;
-  media_type: "image" | "audio" | "text" | "video";
   duration: number;
-  media: MediaPayload;
+  // Quiz (ausentes no Termo)
+  category?: string;
+  media_type?: "image" | "audio" | "text" | "video";
+  media?: MediaPayload;
   prefetch_url?: string; // caminho opaco do vídeo p/ pré-buscar durante o palpite
+  // Termo (ausentes no Quiz) — NUNCA traz a palavra
+  game_mode?: GameMode;
+  termo_mode?: TermoMode;
+  theme?: string;
+  length?: number;
+  max_attempts?: number;
+  submission_cooldown?: number;
+  hint_delay?: number;
 }
 
 export interface RevealUpdate {
@@ -151,6 +174,76 @@ export interface TensionIntro {
   ranking: RankEntry[];
 }
 
+// ---- Mensagens do Modo Termo (servidor -> cliente) ----
+
+export interface SharedGridSubmission {
+  player_id: string;
+  player_name: string;
+  avatar: string;
+  letters: string[];
+  colors: LetterColor[];
+}
+
+/** Resultado completo do MEU palpite (só o autor recebe as letras+cores). */
+export interface TermoGuessResult {
+  type: "guess_result";
+  accepted: boolean;
+  letters: string[];
+  colors: LetterColor[];
+  attempt_index: number;
+  attempts_left: number | null;
+  solved: boolean;
+}
+
+export interface TermoGuessError {
+  type: "guess_error";
+  reason: "length" | "closed" | "exhausted";
+  expected_length?: number;
+}
+
+/** Progresso CENSURADO de um oponente (PVP): apenas as cores, sem as letras. */
+export interface OpponentProgress {
+  type: "opponent_progress";
+  player_id: string;
+  player_name: string;
+  avatar: string;
+  colors: LetterColor[];
+  attempts_left: number;
+  solved: boolean;
+}
+
+export interface SharedGridUpdate {
+  type: "shared_grid_update";
+  submission: SharedGridSubmission;
+  delta_score: number;
+}
+
+export interface TermoSolved {
+  type: "termo_solved";
+  player_id: string;
+  player_name: string;
+}
+
+export interface TermoHint {
+  type: "termo_hint";
+  hint: string;
+}
+
+export interface CooldownError {
+  type: "cooldown_error";
+  message: string;
+  retry_after?: number;
+}
+
+export interface TermoReveal {
+  type: "termo_reveal";
+  word: string;
+  theme: string;
+  hint: string;
+  results: RoundResult[];
+  shared_grid?: SharedGridSubmission[];
+}
+
 export type ServerMessage =
   | LobbyUpdate
   | Joined
@@ -166,7 +259,15 @@ export type ServerMessage =
   | ChatMessage
   | ErrorMsg
   | CloseAnswer
-  | TensionIntro;
+  | TensionIntro
+  | TermoGuessResult
+  | TermoGuessError
+  | OpponentProgress
+  | SharedGridUpdate
+  | TermoSolved
+  | TermoHint
+  | CooldownError
+  | TermoReveal;
 
 // ---- Mensagens cliente -> servidor ----
 
@@ -180,6 +281,12 @@ export type ClientMessage =
       allow_multiple_attempts?: boolean;
       end_on_all_correct?: boolean;
       depixel_speed?: number;
+      game_mode?: GameMode;
+      termo_mode?: TermoMode;
+      termo_round_duration?: number;
+      submission_cooldown?: number;
+      termo_hint_delay?: number;
+      mixed_termo_ratio?: number;
     }
   | {
       type: "update_settings";
@@ -191,7 +298,14 @@ export type ClientMessage =
       depixel_speed?: number;
       tension_enabled?: boolean;
       tension_ratio?: number;
+      game_mode?: GameMode;
+      termo_mode?: TermoMode;
+      termo_round_duration?: number;
+      submission_cooldown?: number;
+      termo_hint_delay?: number;
+      mixed_termo_ratio?: number;
     }
   | { type: "submit_answer"; guess: string }
+  | { type: "submit_guess"; guess: string }
   | { type: "pause_round" }
   | { type: "resume_round" };

@@ -1,0 +1,123 @@
+.bar {
+  position: sticky;
+  bottom: 0;
+  padding: 18px 16px 22px;
+  background: linear-gradient(transparent, #ff7a18 32%);
+}
+:global(body.tension-mode) .bar {
+  background: transparent;
+}
+.inner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+@media (max-width: 480px) {
+  .input {
+    font-size: 18px;
+    letter-spacing: 4px;
+    padding: 13px 12px;
+  }
+  .sendBtn {
+    font-size: 16px;
+    padding: 13px 16px;
+  }
+  .waiting {
+    font-size: 15px;
+    padding: 13px;
+  }
+}
+.field {
+  position: relative;
+  flex: 1;
+}
+.input {
+  width: 100%;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 6px;
+  text-align: center;
+  text-transform: uppercase;
+  padding: 16px 22px;
+  border-radius: 16px;
+  border: 4px solid #2a1206;
+  background: #ffffff;
+  box-shadow: 5px 5px 0 #2a1206;
+  outline: none;
+  transition: box-shadow 0.14s;
+}
+.input:focus {
+  box-shadow: 5px 5px 0 #d6266f;
+}
+.input:disabled {
+  opacity: 0.7;
+}
+
+/* barra de cooldown regressiva (encolhe suavemente até liberar) */
+.cooldownTrack {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -12px;
+  height: 12px;
+  border: 3px solid #2a1206;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 3px 3px 0 #2a1206;
+  overflow: hidden;
+}
+.cooldownFill {
+  height: 100%;
+  background: linear-gradient(180deg, #ff7a5c, #ff5436);
+  transition: width 0.08s linear;
+}
+
+.sendBtn {
+  flex: none;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  color: #fff;
+  background: linear-gradient(180deg, #ff7a5c, #ff5436 55%, #e23a1c);
+  border: 4px solid #2a1206;
+  border-radius: 16px;
+  padding: 16px 24px;
+  cursor: pointer;
+  box-shadow: 5px 5px 0 #2a1206;
+  transition: all 0.14s;
+}
+.sendBtn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 5px 7px 0 #2a1206;
+}
+.sendBtn:not(:disabled):active {
+  transform: translate(0, 3px);
+  box-shadow: 2px 2px 0 #2a1206;
+}
+.sendBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.waiting {
+  max-width: 620px;
+  margin: 0 auto;
+  text-align: center;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  color: #2a1206;
+  padding: 16px;
+  border-radius: 16px;
+  border: 4px solid #2a1206;
+  background: linear-gradient(180deg, #ffe08a, #ffc62e);
+  box-shadow: 5px 5px 0 #2a1206;
+}
+.waitingOk {
+  background: linear-gradient(180deg, #54d479, #3fbf63);
+  color: #fff;
+}

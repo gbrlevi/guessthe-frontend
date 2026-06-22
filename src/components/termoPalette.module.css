@@ -1,0 +1,50 @@
+/* Paleta única das cores de letra do Termo (skin: fundo/cor/borda).
+   Reaproveitada pelos tiles e pelos mini-blocos dos oponentes. A geometria
+   (tamanho/borda/sombra) fica em cada componente; aqui só a "pele" da cor. */
+
+.empty {
+  background: #fff;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.filled {
+  background: #fff;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.correct {
+  background: #3fbf63;
+  color: #fff;
+  border-color: var(--ink);
+}
+.present {
+  background: #ffc62e;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.absent {
+  background: #9b8d83;
+  color: #fff;
+  border-color: var(--ink);
+}
+
+/* Modo Tensão (tema escuro): mantém verdes/dourados saturados e usa cinzas-ardósia
+   distinguíveis (#23262e vazio vs #3a3f47 ausente) para os tiles não sumirem. */
+:global(body.tension-mode) .empty,
+:global(body.tension-mode) .filled {
+  background: #23262e;
+  color: #f4efe9;
+  border-color: #0e0f12;
+}
+:global(body.tension-mode) .correct {
+  background: #2fae57;
+  color: #fff;
+}
+:global(body.tension-mode) .present {
+  background: #e0a91f;
+  color: #1a1208;
+}
+:global(body.tension-mode) .absent {
+  background: #3a3f47;
+  color: #cfc9c2;
+}

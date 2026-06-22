@@ -15,7 +15,9 @@ import loadingQuizUrl from "../assets/loading_quiz.wav";
 import type { AvatarKind } from "../constants/avatars";
 import type {
   ChatMessage,
+  GameMode,
   GamePhase,
+  LetterColor,
   MediaPayload,
   PlayerPublic,
   QuestionStart,
@@ -23,6 +25,8 @@ import type {
   RoomSettings,
   RoundResult,
   ServerMessage,
+  SharedGridSubmission,
+  TermoMode,
 } from "../types/messages";
 
 const API = import.meta.env.VITE_API_URL;
@@ -37,6 +41,13 @@ const isTensionRound = (round: number, total: number, ratio = TENSION_RATIO) =>
 
 // Janela de "pânico": nos últimos N segundos a música acelera (1.0x → 1.5x).
 const PANIC_WINDOW = 10;
+// Termo: tensão nos últimos 15s OU na última tentativa (PvP).
+const TERMO_TENSION_WINDOW = 15;
+
+export interface TermoRow {
+  letters: string[];
+  colors: LetterColor[];
+}
 
 interface GameState {
   phase: GamePhase;
@@ -72,6 +83,21 @@ interface GameState {
   tensionIntro: boolean; // overlay de interstício travando a tela
   tensionRanking: RankEntry[]; // Top atual exibido no interstício
 
+  // Modo Termo
+  gameMode: GameMode;
+  termoMode: TermoMode;
+  wordLength: number;
+  maxAttempts: number;
+  myRows: TermoRow[]; // minhas linhas confirmadas (cores vêm do servidor)
+  solved: boolean;
+  attemptsLeft: number;
+  opponentProgress: Record<string, LetterColor[][]>; // censurado (PvP)
+  sharedRows: SharedGridSubmission[]; // tabuleiro compartilhado
+  termoHint: string | null;
+  submissionCooldown: number; // segundos
+  cooldownUntil: number | null; // epoch ms absoluto
+  termoWord: string | null; // palavra revelada (só no reveal)
+
   revealAnswer: string | null;
   revealResults: RoundResult[];
   ranking: RankEntry[];
@@ -89,6 +115,12 @@ interface GameState {
       endOnAllCorrect: boolean;
       autocomplete: boolean;
       depixelSpeed: number;
+      gameMode: GameMode;
+      termoMode: TermoMode;
+      submissionCooldown: number;
+      termoRoundDuration: number;
+      termoHintDelay: number;
+      mixedTermoRatio: number;
     },
   ) => void;
   updateSettings: (patch: {
@@ -100,8 +132,15 @@ interface GameState {
     depixelSpeed?: number;
     tensionEnabled?: boolean;
     tensionRatio?: number;
+    gameMode?: GameMode;
+    termoMode?: TermoMode;
+    submissionCooldown?: number;
+    termoRoundDuration?: number;
+    termoHintDelay?: number;
+    mixedTermoRatio?: number;
   }) => void;
   submitAnswer: (guess: string) => void;
+  submitGuess: (guess: string) => void;
   pauseRound: () => void;
   resumeRound: () => void;
   backToLobby: () => void;
@@ -174,6 +213,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [tensionIntro, setTensionIntro] = useState(false);
   const [tensionRanking, setTensionRanking] = useState<RankEntry[]>([]);
 
+  // --- Modo Termo ---
+  const [gameMode, setGameMode] = useState<GameMode>("quiz");
+  const [termoMode, setTermoMode] = useState<TermoMode>("pvp_individual");
+  const [wordLength, setWordLength] = useState(0);
+  const [maxAttempts, setMaxAttempts] = useState(6);
+  const [myRows, setMyRows] = useState<TermoRow[]>([]);
+  const [solved, setSolved] = useState(false);
+  const [attemptsLeft, setAttemptsLeft] = useState(6);
+  const [opponentProgress, setOpponentProgress] = useState<Record<string, LetterColor[][]>>({});
+  const [sharedRows, setSharedRows] = useState<SharedGridSubmission[]>([]);
+  const [termoHint, setTermoHint] = useState<string | null>(null);
+  const [submissionCooldown, setSubmissionCooldown] = useState(2);
+  const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+  const [termoWord, setTermoWord] = useState<string | null>(null);
+
   // Refs para as configs de tensão: permitem leitura dentro de callbacks com
   // deps vazias (applyQuestionStart) sem fechar em valores stale.
   const tensionEnabledRef = useRef(true);
@@ -185,10 +239,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [settings]);
 
+  // Refs lidos dentro do dispatcher (deps vazias) — evitam closures stale.
+  const myIdRef = useRef<string | null>(null);
+  const submissionCooldownRef = useRef(2);
+  useEffect(() => { myIdRef.current = myId; }, [myId]);
+  useEffect(() => { submissionCooldownRef.current = submissionCooldown; }, [submissionCooldown]);
+
   // Derivado do estado autoritativo do servidor (round/totalRounds) + config do host.
   const isTension =
     (settings?.tension_enabled ?? true) &&
     isTensionRound(round, totalRounds, settings?.tension_ratio ?? TENSION_RATIO);
+
+  // Termo: última tentativa no PvP é gatilho de tensão (além dos últimos 15s).
+  const onLastAttempt =
+    gameMode === "termo" && termoMode === "pvp_individual" && !solved && attemptsLeft === 1;
+  const termoTensionActive =
+    gameMode === "termo" &&
+    phase === "question" &&
+    (onLastAttempt || (timeLeft != null && timeLeft <= TERMO_TENSION_WINDOW));
 
   const [revealAnswer, setRevealAnswer] = useState<string | null>(null);
   const [revealResults, setRevealResults] = useState<RoundResult[]>([]);
@@ -214,12 +282,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const applyQuestionStart = useCallback((msg: QuestionStart) => {
     clearTimeout(wrongSoundTimerRef.current);
     closeRecentRef.current = false;
+    const gm: GameMode = msg.game_mode ?? "quiz";
     setRound(msg.round);
     setTotalRounds(msg.total_rounds);
-    setCategory(msg.category);
-    setMediaType(msg.media_type);
+    // No Termo não há `category`: usamos o tema para os metadados do cabeçalho.
+    setCategory(msg.category ?? msg.theme ?? "");
+    setMediaType(msg.media_type ?? "text");
     setDuration(msg.duration);
-    setMedia(msg.media);
+    setMedia(msg.media ?? null);
     setTimeLeft(Math.round(msg.duration));
     setAnswered(false);
     setSubmitting(false);
@@ -230,21 +300,43 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setPaused(false);
     setChatMessages([]);
     setTensionIntro(false); // a rodada começou → libera a tela do interstício
+
+    // Reset do estado de Termo a cada rodada (vale tanto p/ Termo quanto p/ Quiz).
+    setGameMode(gm);
+    setMyRows([]);
+    setSolved(false);
+    setOpponentProgress({});
+    setSharedRows([]);
+    setTermoHint(null);
+    setCooldownUntil(null);
+    setTermoWord(null);
+    setAttemptsLeft(msg.max_attempts ?? 6);
+    if (gm === "termo") {
+      setTermoMode(msg.termo_mode ?? "pvp_individual");
+      setWordLength(msg.length ?? 0);
+      setMaxAttempts(msg.max_attempts ?? 6);
+      setSubmissionCooldown(msg.submission_cooldown ?? 2);
+    }
+
     // pré-busca o vídeo do reveal (URL opaca) já durante o palpite, sem bloquear
     setPrefetchVideoUrl(msg.prefetch_url ? `${API}${msg.prefetch_url}` : null);
     setPhase("question");
 
-    // Trilha de fundo da rodada. Perguntas de áudio/vídeo (aberturas de anime)
-    // tocam silêncio musical p/ não competir com a mídia; senão ambiente normal
-    // ou tensão nas rodadas finais. (rate normaliza p/ 1.0 ao (re)iniciar a faixa.)
-    // Refs usados aqui p/ evitar closure stale (callback tem deps vazias).
-    const mediaHasSound = msg.media_type === "audio" || msg.media_type === "video";
-    if (mediaHasSound) {
-      music.play(null);
-    } else if (tensionEnabledRef.current && isTensionRound(msg.round, msg.total_rounds, tensionRatioRef.current)) {
-      music.play("tension");
-    } else {
+    // Trilha de fundo da rodada. Termo usa sempre a faixa ambiente (acelerada na
+    // janela de tensão). Perguntas de áudio/vídeo do quiz tocam silêncio musical;
+    // senão ambiente normal ou tensão nas rodadas finais do quiz.
+    // (rate normaliza p/ 1.0 ao (re)iniciar a faixa.)
+    if (gm === "termo") {
       music.play("ambient");
+    } else {
+      const mediaHasSound = msg.media_type === "audio" || msg.media_type === "video";
+      if (mediaHasSound) {
+        music.play(null);
+      } else if (tensionEnabledRef.current && isTensionRound(msg.round, msg.total_rounds, tensionRatioRef.current)) {
+        music.play("tension");
+      } else {
+        music.play("ambient");
+      }
     }
   }, []);
 
@@ -347,6 +439,76 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setTensionIntro(true);
         music.play(null); // fade-out imediato da faixa ambiente
         break;
+
+      // ---- Modo Termo ----
+      case "guess_result": {
+        // Resultado completo do MEU palpite (cores autoritativas do servidor).
+        setMyRows((prev) => [...prev, { letters: msg.letters, colors: msg.colors }]);
+        if (msg.attempts_left != null) setAttemptsLeft(msg.attempts_left);
+        if (msg.solved) {
+          setSolved(true);
+          sfx.correct();
+        } else if (msg.attempts_left === 0) {
+          sfx.wrong();
+        } else {
+          sfx.near();
+        }
+        break;
+      }
+      case "opponent_progress": {
+        // Progresso censurado (PvP): só as cores, anexadas na ordem de chegada.
+        setOpponentProgress((prev) => {
+          const rows = [...(prev[msg.player_id] ?? []), msg.colors];
+          return { ...prev, [msg.player_id]: rows };
+        });
+        break;
+      }
+      case "shared_grid_update": {
+        setSharedRows((prev) => [...prev, msg.submission]);
+        // Arena: pontos são distribuídos na hora → placar ao vivo (reconciliado no reveal).
+        if (msg.delta_score) {
+          setPlayers((prev) =>
+            prev.map((p) =>
+              p.id === msg.submission.player_id ? { ...p, score: p.score + msg.delta_score } : p,
+            ),
+          );
+        }
+        if (msg.submission.player_id === myIdRef.current) {
+          const ok = msg.submission.colors.every((c) => c === "correct");
+          if (ok) sfx.correct();
+          else sfx.near();
+        }
+        break;
+      }
+      case "termo_hint":
+        setTermoHint(msg.hint);
+        break;
+      case "guess_error":
+        if (msg.reason === "length") {
+          setError(`A palavra tem ${msg.expected_length} letras.`);
+        }
+        // "closed"/"exhausted": silencioso — a UI já reflete o estado.
+        break;
+      case "cooldown_error":
+        // Re-baseia o cooldown local pelo tempo restante informado pelo servidor.
+        setCooldownUntil(Date.now() + (msg.retry_after ?? submissionCooldownRef.current) * 1000);
+        break;
+      case "termo_solved":
+        // O encerramento da rodada vem via reveal; nada a fazer aqui por ora.
+        break;
+      case "termo_reveal":
+        setTermoWord(msg.word);
+        setRevealResults(msg.results);
+        setRevealAnswer(msg.word);
+        setPlayers((prev) =>
+          prev.map((p) => {
+            const r = msg.results.find((r) => r.id === p.id);
+            return r ? { ...p, score: r.score } : p;
+          }),
+        );
+        music.setRate(1.0);
+        setPhase("reveal");
+        break;
       case "reveal_answer":
         setRevealAnswer(msg.answer);
         setRevealResults(msg.results);
@@ -443,6 +605,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         endOnAllCorrect: boolean;
         autocomplete: boolean;
         depixelSpeed: number;
+        gameMode: GameMode;
+        termoMode: TermoMode;
+        submissionCooldown: number;
+        termoRoundDuration: number;
+        termoHintDelay: number;
+        mixedTermoRatio: number;
       },
     ) => {
       setAutocompleteEnabled(config.autocomplete);
@@ -454,6 +622,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         allow_multiple_attempts: config.allowMultipleAttempts,
         end_on_all_correct: config.endOnAllCorrect,
         depixel_speed: config.depixelSpeed,
+        game_mode: config.gameMode,
+        termo_mode: config.termoMode,
+        submission_cooldown: config.submissionCooldown,
+        termo_round_duration: config.termoRoundDuration,
+        termo_hint_delay: config.termoHintDelay,
+        mixed_termo_ratio: config.mixedTermoRatio,
       });
     },
     [send],
@@ -469,6 +643,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       depixelSpeed?: number;
       tensionEnabled?: boolean;
       tensionRatio?: number;
+      gameMode?: GameMode;
+      termoMode?: TermoMode;
+      submissionCooldown?: number;
+      termoRoundDuration?: number;
+      termoHintDelay?: number;
+      mixedTermoRatio?: number;
     }) => {
       send({
         type: "update_settings",
@@ -480,6 +660,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         ...(patch.depixelSpeed !== undefined && { depixel_speed: patch.depixelSpeed }),
         ...(patch.tensionEnabled !== undefined && { tension_enabled: patch.tensionEnabled }),
         ...(patch.tensionRatio !== undefined && { tension_ratio: patch.tensionRatio }),
+        ...(patch.gameMode !== undefined && { game_mode: patch.gameMode }),
+        ...(patch.termoMode !== undefined && { termo_mode: patch.termoMode }),
+        ...(patch.submissionCooldown !== undefined && { submission_cooldown: patch.submissionCooldown }),
+        ...(patch.termoRoundDuration !== undefined && { termo_round_duration: patch.termoRoundDuration }),
+        ...(patch.termoHintDelay !== undefined && { termo_hint_delay: patch.termoHintDelay }),
+        ...(patch.mixedTermoRatio !== undefined && { mixed_termo_ratio: patch.mixedTermoRatio }),
       });
     },
     [send],
@@ -492,6 +678,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       send({ type: "submit_answer", guess });
     },
     [send, answered, submitting],
+  );
+
+  const submitGuess = useCallback(
+    (guess: string) => {
+      if (gameMode !== "termo" || solved) return;
+      if (cooldownUntil && Date.now() < cooldownUntil) return;
+      send({ type: "submit_guess", guess });
+      // cooldown otimista local; o servidor reconfirma/re-baseia via cooldown_error.
+      setCooldownUntil(Date.now() + submissionCooldown * 1000);
+    },
+    [send, gameMode, solved, cooldownUntil, submissionCooldown],
   );
 
   const pauseRound = useCallback(() => send({ type: "pause_round" }), [send]);
@@ -531,6 +728,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setRanking([]);
     setChatMessages([]);
     setPrefetchVideoUrl(null);
+    // Modo Termo
+    setGameMode("quiz");
+    setMyRows([]);
+    setSolved(false);
+    setOpponentProgress({});
+    setSharedRows([]);
+    setTermoHint(null);
+    setCooldownUntil(null);
+    setTermoWord(null);
   }, [disconnect, stopLoadingMusic]);
 
   // Se o WebSocket desconectar e o jogador não estiver na tela inicial, limpa o estado e alerta o usuário
@@ -541,25 +747,37 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [status, phase, leaveRoom]);
 
-  // PÂNICO (Modo Tensão): nos últimos PANIC_WINDOW segundos a faixa acelera
-  // linearmente de 1.0x até 1.5x conforme o tempo decresce. Fora dessa janela
-  // (ou fora da rodada de tensão) a velocidade permanece normal.
+  // PÂNICO (Modo Tensão): a faixa acelera de 1.0x até 1.5x. No Quiz, nos últimos
+  // PANIC_WINDOW s das rodadas de tensão. No Termo, nos últimos TERMO_TENSION_WINDOW s
+  // OU instantaneamente (1.5x) quando o jogador está na última tentativa (PvP).
   useEffect(() => {
-    if (phase !== "question" || !isTension || timeLeft == null) return;
+    if (phase !== "question") return;
+    if (gameMode === "termo") {
+      if (onLastAttempt) {
+        music.setRate(1.5);
+      } else if (timeLeft != null && timeLeft <= TERMO_TENSION_WINDOW) {
+        const progress = (TERMO_TENSION_WINDOW - timeLeft) / TERMO_TENSION_WINDOW; // 0 → 1
+        music.setRate(1.0 + 0.5 * Math.min(1, Math.max(0, progress)));
+      } else {
+        music.setRate(1.0);
+      }
+      return;
+    }
+    if (!isTension || timeLeft == null) return;
     if (timeLeft <= PANIC_WINDOW) {
       const progress = (PANIC_WINDOW - timeLeft) / PANIC_WINDOW; // 0 → 1
       music.setRate(1.0 + 0.5 * Math.min(1, Math.max(0, progress)));
     } else {
       music.setRate(1.0);
     }
-  }, [phase, isTension, timeLeft]);
+  }, [phase, isTension, timeLeft, gameMode, onLastAttempt]);
 
-  // Tema visual do Modo Tensão: injeta a classe global no <body> durante o
-  // gameplay das rodadas finais (laranja → grafite/preto + destaques vermelhos).
+  // Tema visual do Modo Tensão: injeta a classe global no <body>. No Quiz, durante
+  // o gameplay das rodadas finais; no Termo, na janela de tensão / última tentativa.
   useEffect(() => {
-    const active = isTension && (phase === "question" || phase === "reveal" || phase === "scoreboard");
-    document.body.classList.toggle("tension-mode", active);
-  }, [isTension, phase]);
+    const quizActive = isTension && (phase === "question" || phase === "reveal" || phase === "scoreboard");
+    document.body.classList.toggle("tension-mode", quizActive || termoTensionActive);
+  }, [isTension, phase, termoTensionActive]);
 
   // Limpeza ao desmontar o provider: libera elementos de áudio/timers e remove
   // o tema de tensão (evita vazamento de memória / classe órfã no <body>).
@@ -587,8 +805,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, closeAnswer, paused, autocompleteEnabled,
       isTension, tensionIntro, tensionRanking,
+      gameMode, termoMode, wordLength, maxAttempts, myRows, solved, attemptsLeft,
+      opponentProgress, sharedRows, termoHint, submissionCooldown, cooldownUntil, termoWord,
       revealAnswer, revealResults, ranking, chatMessages,
-      createRoom, joinRoom, startGame, updateSettings, submitAnswer, pauseRound, resumeRound,
+      createRoom, joinRoom, startGame, updateSettings, submitAnswer, submitGuess, pauseRound, resumeRound,
       backToLobby, leaveRoom, changeIdentity,
     }),
     [
@@ -596,8 +816,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       round, totalRounds, category, mediaType, duration, media, timeLeft,
       answered, submitting, answerResult, closeAnswer, paused, autocompleteEnabled,
       isTension, tensionIntro, tensionRanking,
+      gameMode, termoMode, wordLength, maxAttempts, myRows, solved, attemptsLeft,
+      opponentProgress, sharedRows, termoHint, submissionCooldown, cooldownUntil, termoWord,
       revealAnswer, revealResults, ranking, chatMessages,
-      createRoom, joinRoom, startGame, updateSettings, submitAnswer, pauseRound, resumeRound,
+      createRoom, joinRoom, startGame, updateSettings, submitAnswer, submitGuess, pauseRound, resumeRound,
       backToLobby, leaveRoom, changeIdentity,
     ],
   );

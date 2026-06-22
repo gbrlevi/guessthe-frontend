@@ -18,6 +18,7 @@ import { AVATAR_KINDS, type AvatarKind } from "../constants/avatars";
 import { getCategoryMeta } from "../constants/categoryMeta";
 import { useGame } from "../context/GameContext";
 import { sfx } from "../lib/sfx";
+import type { GameMode, TermoMode } from "../types/messages";
 import styles from "./Lobby.module.css";
 
 const API = import.meta.env.VITE_API_URL;
@@ -35,6 +36,13 @@ interface GameConfig {
   depixelSpeed: number;
   tensionEnabled: boolean;
   tensionPercent: number; // % das rodadas finais em tensão (ex.: 30 → últimos 30%)
+  // Modo Termo
+  gameMode: GameMode;
+  termoMode: TermoMode;
+  submissionCooldown: number; // 0–5s
+  termoRoundDuration: number; // s (padrão 60)
+  termoHintDelay: number; // s (padrão 30)
+  mixedTermoPercent: number; // % de rodadas de Termo no modo Misto (padrão 50)
 }
 
 const DEFAULT_CONFIG: GameConfig = {
@@ -45,6 +53,12 @@ const DEFAULT_CONFIG: GameConfig = {
   depixelSpeed: 5,
   tensionEnabled: true,
   tensionPercent: 30,
+  gameMode: "quiz",
+  termoMode: "pvp_individual",
+  submissionCooldown: 2,
+  termoRoundDuration: 60,
+  termoHintDelay: 30,
+  mixedTermoPercent: 50,
 };
 
 export function Lobby() {
@@ -112,7 +126,16 @@ export function Lobby() {
   };
 
   const selectAll = () => {
-    const all = categories.map((c) => c.category);
+    const mode = config.gameMode;
+    const all = categories
+      .filter((c) =>
+        mode === "termo"
+          ? c.category.startsWith("termo_")
+          : mode === "quiz"
+            ? !c.category.startsWith("termo_")
+            : true, // misto: tudo
+      )
+      .map((c) => c.category);
     setSelected(all);
     updateSettings({ categories: all });
   };
@@ -124,6 +147,10 @@ export function Lobby() {
   const updateConfig = (key: keyof GameConfig, value: unknown) => {
     setConfig((prev) => {
       const next = { ...prev, [key]: value };
+      // A dica nunca pode atrasar mais que a própria rodada.
+      if (key === "termoRoundDuration") {
+        next.termoHintDelay = Math.min(prev.termoHintDelay, value as number);
+      }
       // Sincroniza com o servidor em tempo real (só campos relevantes ao backend)
       if (key === "roundDuration") updateSettings({ roundDuration: value as number });
       if (key === "allowMultipleAttempts") updateSettings({ allowMultipleAttempts: value as boolean });
@@ -131,6 +158,14 @@ export function Lobby() {
       if (key === "depixelSpeed") updateSettings({ depixelSpeed: value as number });
       if (key === "tensionEnabled") updateSettings({ tensionEnabled: value as boolean });
       if (key === "tensionPercent") updateSettings({ tensionRatio: 1 - (value as number) / 100 });
+      if (key === "gameMode") updateSettings({ gameMode: value as GameMode });
+      if (key === "termoMode") updateSettings({ termoMode: value as TermoMode });
+      if (key === "submissionCooldown") updateSettings({ submissionCooldown: value as number });
+      if (key === "termoRoundDuration") {
+        updateSettings({ termoRoundDuration: value as number, termoHintDelay: next.termoHintDelay });
+      }
+      if (key === "termoHintDelay") updateSettings({ termoHintDelay: value as number });
+      if (key === "mixedTermoPercent") updateSettings({ mixedTermoRatio: (value as number) / 100 });
       return next;
     });
   };
@@ -162,7 +197,8 @@ export function Lobby() {
     if (starting) return;
     sfx.click();
     setStarting(true);
-    startGame(selected, rounds, config);
+    const startConfig = { ...config, mixedTermoRatio: config.mixedTermoPercent / 100 };
+    startGame(selected, rounds, startConfig);
   };
 
   // Valores visíveis pelo guest refletem as configurações sincronizadas pelo host
@@ -177,6 +213,32 @@ export function Lobby() {
   const activeTensionPercent = isHost
     ? config.tensionPercent
     : Math.round((1 - (settings?.tension_ratio ?? 0.7)) * 100);
+
+  // Modo de jogo + parâmetros do Termo (host = config local; guest = settings do servidor)
+  const activeGameMode: GameMode = isHost ? config.gameMode : (settings?.game_mode ?? "quiz");
+  const activeTermoMode: TermoMode = isHost ? config.termoMode : (settings?.termo_mode ?? "pvp_individual");
+  const activeCooldown = isHost ? config.submissionCooldown : (settings?.submission_cooldown ?? 2);
+  const activeTermoDuration = isHost ? config.termoRoundDuration : (settings?.termo_round_duration ?? 60);
+  const activeHintDelay = isHost ? config.termoHintDelay : (settings?.termo_hint_delay ?? 30);
+  const activeMixedPercent = isHost
+    ? config.mixedTermoPercent
+    : Math.round((settings?.mixed_termo_ratio ?? 0.5) * 100);
+  const isTermoMode = activeGameMode === "termo";
+  const isMixedMode = activeGameMode === "misto";
+  const showsTermo = activeGameMode !== "quiz"; // termo ou misto
+  const showsQuiz = activeGameMode !== "termo"; // quiz ou misto
+  const modeLabel = isMixedMode ? "Misto" : isTermoMode ? "Termo PvP" : "Quiz";
+  const termoModeLabel =
+    activeTermoMode === "pvp_individual" ? "PvP Individual" : "Tabuleiro Compartilhado";
+
+  // Categorias visíveis conforme o modo: Termo só termo_*, Quiz só não-termo, Misto tudo.
+  const visibleCategories = categories.filter((c) =>
+    isTermoMode
+      ? c.category.startsWith("termo_")
+      : isMixedMode
+        ? true
+        : !c.category.startsWith("termo_"),
+  );
 
   return (
     <div className={styles.screen}>
@@ -263,6 +325,33 @@ export function Lobby() {
 
               {isHost ? (
                 <div className={styles.settingsPanelHost}>
+                  <div className={styles.modeRow}>
+                    <span className={styles.settingLabel}>Modo:</span>
+                    <div className={styles.modeSeg}>
+                      <button
+                        type="button"
+                        className={`${styles.modeSegBtn} ${config.gameMode === "quiz" ? styles.modeSegActive : ""}`}
+                        onClick={() => updateConfig("gameMode", "quiz")}
+                      >
+                        Quiz
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.modeSegBtn} ${config.gameMode === "termo" ? styles.modeSegActive : ""}`}
+                        onClick={() => updateConfig("gameMode", "termo")}
+                      >
+                        Termo PvP
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.modeSegBtn} ${config.gameMode === "misto" ? styles.modeSegActive : ""}`}
+                        onClick={() => updateConfig("gameMode", "misto")}
+                      >
+                        Misto
+                      </button>
+                    </div>
+                  </div>
+
                   <div className={styles.roundsRow}>
                     <span className={styles.settingLabel}>Rounds:</span>
                     <div className={styles.stepper}>
@@ -308,41 +397,75 @@ export function Lobby() {
                 <div className={styles.settingsPanelGuest}>
                   <div className={styles.rulesList}>
                     <div className={styles.ruleItem}>
+                      <span className={styles.ruleName}>Modo</span>
+                      <span className={styles.ruleVal}>{modeLabel}</span>
+                    </div>
+                    <div className={styles.ruleItem}>
                       <span className={styles.ruleName}>Rounds</span>
                       <span className={styles.ruleVal}>{activeRounds}</span>
                     </div>
-                    <div className={styles.ruleItem}>
-                      <span className={styles.ruleName}>Tempo por rodada</span>
-                      <span className={styles.ruleVal}>{activeDuration}s</span>
-                    </div>
-                    <div className={styles.ruleItem}>
-                      <span className={styles.ruleName}>Tentativas múltiplas</span>
-                      <span className={`${styles.ruleTag} ${activeMultiple ? styles.tagOn : styles.tagOff}`}>
-                        {activeMultiple ? "Ativo" : "Inativo"}
-                      </span>
-                    </div>
-                    <div className={styles.ruleItem}>
-                      <span className={styles.ruleName}>Encerrar p/ todos</span>
-                      <span className={`${styles.ruleTag} ${activeEndAll ? styles.tagOn : styles.tagOff}`}>
-                        {activeEndAll ? "Ativo" : "Inativo"}
-                      </span>
-                    </div>
-                    <div className={styles.ruleItem}>
-                      <span className={styles.ruleName}>Sugestão (Auto)</span>
-                      <span className={`${styles.ruleTag} ${activeAutocomplete ? styles.tagOn : styles.tagOff}`}>
-                        {activeAutocomplete ? "Ativo" : "Inativo"}
-                      </span>
-                    </div>
-                    <div className={styles.ruleItem}>
-                      <span className={styles.ruleName}>Vel. despixelização</span>
-                      <span className={styles.ruleVal}>{activeDepixelSpeed}/10</span>
-                    </div>
-                    <div className={styles.ruleItem}>
-                      <span className={styles.ruleName}>Modo Tensão</span>
-                      <span className={`${styles.ruleTag} ${activeTensionEnabled ? styles.tagOn : styles.tagOff}`}>
-                        {activeTensionEnabled ? `Ativo (${activeTensionPercent}%)` : "Inativo"}
-                      </span>
-                    </div>
+                    {isMixedMode && (
+                      <div className={styles.ruleItem}>
+                        <span className={styles.ruleName}>Proporção de Termo</span>
+                        <span className={styles.ruleVal}>{activeMixedPercent}%</span>
+                      </div>
+                    )}
+                    {showsTermo && (
+                      <>
+                        <div className={styles.ruleItem}>
+                          <span className={styles.ruleName}>Tipo de Termo</span>
+                          <span className={styles.ruleVal}>{termoModeLabel}</span>
+                        </div>
+                        <div className={styles.ruleItem}>
+                          <span className={styles.ruleName}>Tempo por rodada</span>
+                          <span className={styles.ruleVal}>{activeTermoDuration}s</span>
+                        </div>
+                        <div className={styles.ruleItem}>
+                          <span className={styles.ruleName}>Cooldown de envio</span>
+                          <span className={styles.ruleVal}>{activeCooldown}s</span>
+                        </div>
+                        <div className={styles.ruleItem}>
+                          <span className={styles.ruleName}>Atraso da dica</span>
+                          <span className={styles.ruleVal}>{activeHintDelay}s</span>
+                        </div>
+                      </>
+                    )}
+                    {showsQuiz && (
+                      <>
+                        <div className={styles.ruleItem}>
+                          <span className={styles.ruleName}>Tempo por rodada</span>
+                          <span className={styles.ruleVal}>{activeDuration}s</span>
+                        </div>
+                        <div className={styles.ruleItem}>
+                          <span className={styles.ruleName}>Tentativas múltiplas</span>
+                          <span className={`${styles.ruleTag} ${activeMultiple ? styles.tagOn : styles.tagOff}`}>
+                            {activeMultiple ? "Ativo" : "Inativo"}
+                          </span>
+                        </div>
+                        <div className={styles.ruleItem}>
+                          <span className={styles.ruleName}>Encerrar p/ todos</span>
+                          <span className={`${styles.ruleTag} ${activeEndAll ? styles.tagOn : styles.tagOff}`}>
+                            {activeEndAll ? "Ativo" : "Inativo"}
+                          </span>
+                        </div>
+                        <div className={styles.ruleItem}>
+                          <span className={styles.ruleName}>Sugestão (Auto)</span>
+                          <span className={`${styles.ruleTag} ${activeAutocomplete ? styles.tagOn : styles.tagOff}`}>
+                            {activeAutocomplete ? "Ativo" : "Inativo"}
+                          </span>
+                        </div>
+                        <div className={styles.ruleItem}>
+                          <span className={styles.ruleName}>Vel. despixelização</span>
+                          <span className={styles.ruleVal}>{activeDepixelSpeed}/10</span>
+                        </div>
+                        <div className={styles.ruleItem}>
+                          <span className={styles.ruleName}>Modo Tensão</span>
+                          <span className={`${styles.ruleTag} ${activeTensionEnabled ? styles.tagOn : styles.tagOff}`}>
+                            {activeTensionEnabled ? `Ativo (${activeTensionPercent}%)` : "Inativo"}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className={styles.guestWaiting}>
                     <div className={styles.waitingDot} />
@@ -375,11 +498,15 @@ export function Lobby() {
               <div className={styles.catHeaderLeft}>
                 <h3 className={styles.sectionTitle}>
                   <GridIcon size={22} />
-                  Categorias do Quiz
+                  {isTermoMode ? "Temas do Termo" : isMixedMode ? "Categorias & Temas" : "Categorias do Quiz"}
                 </h3>
                 <p className={styles.catSubtitle}>
                   {isHost
-                    ? "Escolha quais categorias farão parte da partida!"
+                    ? isTermoMode
+                      ? "Escolha os temas das palavras do Termo!"
+                      : isMixedMode
+                        ? "Escolha categorias de quiz e temas de Termo — as rodadas serão intercaladas."
+                        : "Escolha quais categorias farão parte da partida!"
                     : "Estas são as categorias disponíveis para o jogo."}
                 </p>
               </div>
@@ -396,10 +523,14 @@ export function Lobby() {
             </div>
 
             <div className={styles.catGrid}>
-              {categories.length === 0 && (
-                <p className={styles.emptyCats}>Nenhuma categoria no banco — rode os seeders.</p>
+              {visibleCategories.length === 0 && (
+                <p className={styles.emptyCats}>
+                  {isTermoMode
+                    ? "Nenhum tema de Termo no banco — rode python -m scripts.seed_termo."
+                    : "Nenhuma categoria no banco — rode os seeders."}
+                </p>
               )}
-              {categories.map((c) => {
+              {visibleCategories.map((c) => {
                 const meta = getCategoryMeta(c.category);
                 const isSelected = activeSelected.includes(c.category);
 
@@ -448,6 +579,106 @@ export function Lobby() {
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h2 className={styles.modalTitle}>⚙ Configurações Extras</h2>
 
+            <div className={styles.modalBody}>
+            {config.gameMode !== "quiz" && (
+              <>
+                {config.gameMode === "misto" && (
+                  <label className={styles.configRow}>
+                    <span>
+                      Proporção de Termo
+                      <small className={styles.configSmall}>Quanto da partida é Termo (o resto é Quiz)</small>
+                    </span>
+                    <div className={styles.configInputGroup}>
+                      <input
+                        className={styles.range}
+                        type="range"
+                        min={10}
+                        max={90}
+                        step={10}
+                        value={config.mixedTermoPercent}
+                        onChange={(e) => updateConfig("mixedTermoPercent", Number(e.target.value))}
+                      />
+                      <span className={styles.configValue}>{config.mixedTermoPercent}%</span>
+                    </div>
+                  </label>
+                )}
+
+                <label className={styles.configRow}>
+                  <span>
+                    Tipo de Termo
+                    <small className={styles.configSmall}>PvP individual (grade própria) ou tabuleiro compartilhado</small>
+                  </span>
+                  <select
+                    className={styles.select}
+                    value={config.termoMode}
+                    onChange={(e) => updateConfig("termoMode", e.target.value as TermoMode)}
+                  >
+                    <option value="pvp_individual">PvP Individual</option>
+                    <option value="tabuleiro_compartilhado">Tabuleiro Compartilhado</option>
+                  </select>
+                </label>
+
+                <label className={styles.configRow}>
+                  <span>
+                    Cooldown de envio
+                    <small className={styles.configSmall}>Intervalo mínimo entre palpites (0–5s)</small>
+                  </span>
+                  <div className={styles.configInputGroup}>
+                    <input
+                      className={styles.range}
+                      type="range"
+                      min={0}
+                      max={5}
+                      step={0.5}
+                      value={config.submissionCooldown}
+                      onChange={(e) => updateConfig("submissionCooldown", Number(e.target.value))}
+                    />
+                    <span className={styles.configValue}>{config.submissionCooldown}s</span>
+                  </div>
+                </label>
+
+                <label className={styles.configRow}>
+                  <span>
+                    Duração do round (Termo)
+                    <small className={styles.configSmall}>Tempo de cada rodada de Termo</small>
+                  </span>
+                  <div className={styles.configInputGroup}>
+                    <input
+                      className={styles.range}
+                      type="range"
+                      min={15}
+                      max={180}
+                      step={5}
+                      value={config.termoRoundDuration}
+                      onChange={(e) => updateConfig("termoRoundDuration", Number(e.target.value))}
+                    />
+                    <span className={styles.configValue}>{config.termoRoundDuration}s</span>
+                  </div>
+                </label>
+
+                <label className={styles.configRow}>
+                  <span>
+                    Atraso da dica
+                    <small className={styles.configSmall}>Quando a dica aparece na rodada</small>
+                  </span>
+                  <div className={styles.configInputGroup}>
+                    <input
+                      className={styles.range}
+                      type="range"
+                      min={0}
+                      max={config.termoRoundDuration}
+                      step={5}
+                      value={config.termoHintDelay}
+                      onChange={(e) => updateConfig("termoHintDelay", Number(e.target.value))}
+                    />
+                    <span className={styles.configValue}>{config.termoHintDelay}s</span>
+                  </div>
+                </label>
+              </>
+            )}
+
+            {config.gameMode !== "termo" && (
+              <>
             <label className={styles.configRow}>
               <span>Duração do round</span>
               <div className={styles.configInputGroup}>
@@ -550,6 +781,9 @@ export function Lobby() {
                 <span className={styles.configValue}>{config.tensionPercent}%</span>
               </div>
             </label>
+              </>
+            )}
+            </div>
 
             <button className={styles.modalClose} onClick={() => setShowConfig(false)}>
               Salvar e Fechar

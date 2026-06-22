@@ -12,6 +12,9 @@ import { ScorerList } from "../components/ScorerList";
 import { MusicVolume } from "../components/MusicVolume";
 import { SoundToggle } from "../components/SoundToggle";
 import { TensionInterstitial } from "../components/TensionInterstitial";
+import { TermoBoardPvp } from "../components/TermoBoardPvp";
+import { TermoInput } from "../components/TermoInput";
+import { TermoSharedBoard } from "../components/TermoSharedBoard";
 import { Timer } from "../components/Timer";
 import { Vignette } from "../components/Vignette";
 import type { AvatarKind } from "../constants/avatars";
@@ -22,8 +25,9 @@ import { fireSideConfetti } from "../lib/confetti";
 import { sfx } from "../lib/sfx";
 import styles from "./Game.module.css";
 
-// Janela de pânico do Modo Tensão: vinheta vermelha nos últimos 10s.
+// Janela de pânico do Modo Tensão: vinheta vermelha nos últimos 10s (quiz) / 15s (termo).
 const PANIC_WINDOW = 10;
+const TERMO_TENSION_WINDOW = 15;
 
 export function Game() {
   const {
@@ -45,10 +49,25 @@ export function Game() {
     paused,
     pauseRound,
     resumeRound,
+    gameMode,
+    termoMode,
+    solved,
+    attemptsLeft,
+    termoHint,
   } = useGame();
 
   const meta = getCategoryMeta(category);
   const [showLeave, setShowLeave] = useState(false);
+  const isTermo = gameMode === "termo";
+
+  // Linha em digitação do Termo (transiente): vive aqui p/ refletir na grade.
+  const [draft, setDraft] = useState("");
+  useEffect(() => {
+    setDraft("");
+  }, [round]);
+
+  // Termo: última tentativa (PvP) é gatilho de tensão, além dos últimos 15s.
+  const onLastAttempt = isTermo && termoMode === "pvp_individual" && !solved && attemptsLeft === 1;
 
   // Resultado do jogador local nesta rodada (autoritativo do servidor).
   const myResult = revealResults.find((r) => r.id === myId);
@@ -63,9 +82,13 @@ export function Game() {
     }
   }, [phase, myCorrect, round]);
 
-  // Vinheta de pânico: últimos PANIC_WINDOW segundos de uma rodada de tensão.
+  // Vinheta de pânico: quiz (últimos PANIC_WINDOW s das rodadas de tensão) ou
+  // termo (últimos TERMO_TENSION_WINDOW s OU na última tentativa do PvP).
   const panic =
-    phase === "question" && isTension && !paused && timeLeft != null && timeLeft <= PANIC_WINDOW;
+    phase === "question" &&
+    !paused &&
+    ((isTension && timeLeft != null && timeLeft <= PANIC_WINDOW) ||
+      (isTermo && (onLastAttempt || (timeLeft != null && timeLeft <= TERMO_TENSION_WINDOW))));
 
   const exitBtn = (
     <button
@@ -154,11 +177,15 @@ export function Game() {
 
           <div className={styles.revealGrid}>
             <div className={styles.answerCard}>
-              <div className={styles.answerMedia}>
-                <MediaArea media={media} revealed={true} />
-              </div>
+              {!isTermo && (
+                <div className={styles.answerMedia}>
+                  <MediaArea media={media} revealed={true} />
+                </div>
+              )}
               <div className={styles.answerInfo}>
-                <div className={styles.answerLabel}>A resposta certa era</div>
+                <div className={styles.answerLabel}>
+                  {isTermo ? "A palavra era" : "A resposta certa era"}
+                </div>
                 <div className={styles.answerText}>{revealAnswer}</div>
                 <div className={styles.answerCat}>
                   <div className={styles.answerCatIcon}>
@@ -242,25 +269,49 @@ export function Game() {
           </div>
         </div>
 
-        <div className={styles.main}>
-          <div className={styles.mediaCard}>
-            <div className={styles.mediaHeader}>
-              <div className={styles.mediaHint}>{meta.mediaHint}</div>
-              <div className={styles.liveBadge}>
-                <span className={styles.liveDot} />
-                AO VIVO
+        {isTermo ? (
+          termoMode === "pvp_individual" ? (
+            <div className={styles.termoPvpMain}>
+              <div className={styles.termoPvpCard}>
+                {termoHint && <div className={styles.termoHintBanner}>💡 Dica: {termoHint}</div>}
+                <TermoBoardPvp draft={draft} />
+              </div>
+              <div className={styles.sidebar}>
+                <Leaderboard players={players} />
               </div>
             </div>
-            <MediaArea media={media} revealed={false} />
-          </div>
+          ) : (
+            <div className={styles.termoMainShared}>
+              <div className={styles.termoSharedCol}>
+                {termoHint && <div className={styles.termoHintBanner}>💡 Dica: {termoHint}</div>}
+                <TermoSharedBoard />
+              </div>
+              <div className={styles.sidebar}>
+                <Leaderboard players={players} />
+              </div>
+            </div>
+          )
+        ) : (
+          <div className={styles.main}>
+            <div className={styles.mediaCard}>
+              <div className={styles.mediaHeader}>
+                <div className={styles.mediaHint}>{meta.mediaHint}</div>
+                <div className={styles.liveBadge}>
+                  <span className={styles.liveDot} />
+                  AO VIVO
+                </div>
+              </div>
+              <MediaArea media={media} revealed={false} />
+            </div>
 
-          <div className={styles.sidebar}>
-            <Leaderboard players={players} />
-            <GuessFeed />
+            <div className={styles.sidebar}>
+              <Leaderboard players={players} />
+              <GuessFeed />
+            </div>
           </div>
-        </div>
+        )}
 
-        {!paused && <AnswerInput />}
+        {!paused && (isTermo ? <TermoInput draft={draft} setDraft={setDraft} /> : <AnswerInput />)}
       </div>
     );
   }

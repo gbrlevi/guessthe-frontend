@@ -107,6 +107,30 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     iconKind: "steam",
     mediaHint: "De qual jogo é essa review?",
   },
+  termo_anime: {
+    label: "Termo — Anime",
+    icon: "🔤",
+    iconKind: "anime",
+    mediaHint: "Adivinhe a palavra!",
+  },
+  termo_games: {
+    label: "Termo — Games",
+    icon: "🔤",
+    iconKind: "coverGame",
+    mediaHint: "Adivinhe a palavra!",
+  },
+  termo_pokemon: {
+    label: "Termo — Pokémon",
+    icon: "🔤",
+    iconKind: "pokemon",
+    mediaHint: "Adivinhe a palavra!",
+  },
+  termo_geral: {
+    label: "Termo — Geral",
+    icon: "🔤",
+    iconKind: "plot",
+    mediaHint: "Adivinhe a palavra!",
+  },
 };
 
 /** Retorna metadados de uma categoria, com fallback para o slug bruto. */

@@ -494,4 +494,72 @@
   .revealGrid {
     grid-template-columns: 1fr;
   }
+  .termoMainShared {
+    grid-template-columns: 1fr;
+  }
+  .termoPvpMain {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================ TERMO (question) =========================== */
+.termoMain {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  animation: var(--kf-rise) 0.5s cubic-bezier(0.22, 0.85, 0.3, 1) 0.05s both;
+}
+
+/* PvP Individual: card branco + sidebar de pontuação */
+.termoPvpMain {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 18px;
+  align-items: start;
+  animation: var(--kf-rise) 0.5s cubic-bezier(0.22, 0.85, 0.3, 1) 0.05s both;
+}
+.termoPvpCard {
+  background: #ffffff;
+  border: 5px solid #2a1206;
+  border-radius: 28px;
+  box-shadow: 8px 8px 0 #2a1206;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+:global(body.tension-mode) .termoPvpCard {
+  background: #1c1f26;
+  border-color: #0e0f12;
+  box-shadow: 8px 8px 0 #000;
+}
+.termoMainShared {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 18px;
+  align-items: start;
+  animation: var(--kf-rise) 0.5s cubic-bezier(0.22, 0.85, 0.3, 1) 0.05s both;
+}
+.termoSharedCol {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.termoHintBanner {
+  align-self: center;
+  max-width: 620px;
+  text-align: center;
+  font-family: Nunito, sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  color: #2a1206;
+  background: linear-gradient(180deg, #ffe08a, #ffc62e);
+  border: 3px solid #2a1206;
+  border-radius: 14px;
+  padding: 9px 16px;
+  box-shadow: 3px 3px 0 #2a1206;
+  animation: var(--kf-pop) 0.3s ease both;
 }

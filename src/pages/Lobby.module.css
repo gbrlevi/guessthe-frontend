@@ -299,6 +299,69 @@
   justify-content: space-between;
   gap: 12px;
 }
+
+/* seletor de modo de jogo (Quiz / Termo PvP / Misto) — pílulas neobrutalism */
+.modeRow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.modeSeg {
+  display: flex;
+  background: #fff6ec;
+  border: 3px solid #2a1206;
+  border-radius: 999px;
+  padding: 3px;
+  box-shadow: 2px 2px 0 #2a1206;
+  gap: 3px;
+}
+.modeSegBtn {
+  flex: 1;
+  font-family: Fredoka, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #2a1206;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: all 0.14s;
+  white-space: nowrap;
+}
+.modeSegBtn:hover {
+  background: #ffe7c2;
+}
+.modeSegActive,
+.modeSegActive:hover {
+  background: linear-gradient(180deg, #ffd96b, #ffc62e 55%, #f2a600);
+  border: 2px solid #2a1206;
+  box-shadow: 2px 2px 0 #2a1206;
+  padding: 5px 12px;
+}
+
+/* <select> neobrutalism (Tipo de Termo) */
+.select {
+  font-family: Nunito, sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  color: #2a1206;
+  background: #ffffff;
+  border: 3px solid #2a1206;
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 #2a1206;
+  padding: 10px 14px;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  transition: box-shadow 0.14s;
+}
+.select:focus {
+  box-shadow: 3px 3px 0 #d6266f;
+}
+
 .settingLabel {
   font-family: Fredoka, sans-serif;
   font-weight: 700;
@@ -664,12 +727,32 @@
 .modal {
   width: 100%;
   max-width: 470px;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
   background: #ffffff;
   border: 5px solid #2a1206;
   border-radius: 28px;
   box-shadow: 10px 10px 0 #2a1206;
   padding: 26px;
   animation: var(--kf-rise) 0.35s cubic-bezier(0.22, 0.85, 0.3, 1) both;
+}
+.modalBody {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  margin: 0 -26px;
+  padding: 0 26px;
+  scrollbar-width: thin;
+  scrollbar-color: #e7cdb0 transparent;
+}
+.modalBody::-webkit-scrollbar {
+  width: 6px;
+}
+.modalBody::-webkit-scrollbar-thumb {
+  background: #e7cdb0;
+  border-radius: 3px;
 }
 .modalTitle {
   font-family: Fredoka, sans-serif;
