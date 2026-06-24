@@ -10,14 +10,14 @@
   min-width: 0;
 }
 .lg {
-  width: 48px;
-  height: 48px;
-  font-size: clamp(16px, 4.5vw, 26px);
+  width: 72px;
+  height: 72px;
+  font-size: clamp(24px, 5.5vw, 36px);
 }
 .md {
-  width: 34px;
-  height: 34px;
-  font-size: clamp(13px, 3.6vw, 20px);
+  width: 54px;
+  height: 54px;
+  font-size: clamp(18px, 4.5vw, 28px);
 }
 .reveal {
   animation: var(--kf-pop) 0.3s ease both;

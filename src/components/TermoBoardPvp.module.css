@@ -14,11 +14,10 @@
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(var(--cols), 1fr);
-  gap: 7px;
-  /* respeita o padding do card pai em vez de usar vw absoluto */
+  grid-template-columns: repeat(var(--cols), auto);
+  justify-content: center;
+  gap: 8px;
   width: 100%;
-  max-width: 460px;
 }
 
 /* painel lateral dos rivais (mini-grids censurados) */

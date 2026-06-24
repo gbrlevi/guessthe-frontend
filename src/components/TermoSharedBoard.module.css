@@ -1,13 +1,16 @@
 .card {
   width: 100%;
+  max-width: 100%;
   background: #fff;
   border: 5px solid var(--ink);
   border-radius: 28px;
   box-shadow: 8px 8px 0 var(--ink);
-  padding: 22px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
   animation: var(--kf-rise) 0.5s cubic-bezier(0.22, 0.85, 0.3, 1) 0.05s both;
+  flex: 1;
+  min-height: 0;
 }
 :global(body.tension-mode) .card {
   background: #1c1f26;
@@ -15,8 +18,8 @@
   box-shadow: 8px 8px 0 #000;
 }
 .scroll {
-  max-height: 60vh;
-  max-height: 60dvh;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -91,10 +94,10 @@
   color: #f4efe9;
 }
 .tiles {
-  display: grid;
-  grid-template-columns: repeat(var(--cols), 1fr);
-  gap: 6px;
-  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
   min-width: 0;
 }
 
@@ -113,8 +116,5 @@
   .tiles {
     width: 100%;
   }
-  .scroll {
-    max-height: 45vh;
-    max-height: 45dvh;
-  }
+
 }

@@ -269,12 +269,18 @@ export function Game() {
           </div>
         </div>
 
+        {isTermo && termoHint && (
+          <div className={styles.termoHintBanner}>💡 Dica: {termoHint}</div>
+        )}
+
         {isTermo ? (
           termoMode === "pvp_individual" ? (
             <div className={styles.termoPvpMain}>
-              <div className={styles.termoPvpCard}>
-                {termoHint && <div className={styles.termoHintBanner}>💡 Dica: {termoHint}</div>}
-                <TermoBoardPvp draft={draft} />
+              <div className={styles.termoPvpCol}>
+                <div className={styles.termoPvpCard}>
+                  <TermoBoardPvp draft={draft} />
+                </div>
+                {!paused && <TermoInput draft={draft} setDraft={setDraft} />}
               </div>
               <div className={styles.sidebar}>
                 <Leaderboard players={players} />
@@ -283,8 +289,8 @@ export function Game() {
           ) : (
             <div className={styles.termoMainShared}>
               <div className={styles.termoSharedCol}>
-                {termoHint && <div className={styles.termoHintBanner}>💡 Dica: {termoHint}</div>}
                 <TermoSharedBoard />
+                {!paused && <TermoInput draft={draft} setDraft={setDraft} />}
               </div>
               <div className={styles.sidebar}>
                 <Leaderboard players={players} />
@@ -311,7 +317,7 @@ export function Game() {
           </div>
         )}
 
-        {!paused && (isTermo ? <TermoInput draft={draft} setDraft={setDraft} /> : <AnswerInput />)}
+        {!paused && !isTermo && <AnswerInput />}
       </div>
     );
   }
