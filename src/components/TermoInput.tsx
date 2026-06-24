@@ -210,14 +210,19 @@ export function TermoInput({
           </div>
         )}
 
-        {/* Cooldown bar */}
-        {isCooldownActive && (
-          <div className={styles.cooldownContainer}>
-            <div className={styles.cooldownTrack} aria-hidden="true">
-              <div className={styles.cooldownFill} style={{ width: `${pct}%` }} />
-            </div>
+        {/* Cooldown bar (sempre renderizado para reservar o espaço) */}
+        <div 
+          className={styles.cooldownContainer} 
+          style={{ 
+            opacity: isCooldownActive ? 1 : 0, 
+            pointerEvents: "none",
+            transition: "opacity 0.2s" 
+          }}
+        >
+          <div className={styles.cooldownTrack} aria-hidden="true">
+            <div className={styles.cooldownFill} style={{ width: `${pct}%` }} />
           </div>
-        )}
+        </div>
 
         {/* Teclado Virtual */}
         <div className={styles.keyboard}>
