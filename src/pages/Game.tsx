@@ -178,7 +178,7 @@ export function Game() {
           <div className={styles.revealGrid}>
             <div className={styles.answerCard}>
               {!isTermo && (
-                <div className={styles.answerMedia}>
+                <div className={`${styles.answerMedia} ${media?.kind === "text" ? styles.answerMediaText : ""}`}>
                   <MediaArea media={media} revealed={true} />
                 </div>
               )}

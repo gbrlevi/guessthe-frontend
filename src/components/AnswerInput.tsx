@@ -36,6 +36,7 @@ export function AnswerInput() {
   const [pool, setPool] = useState<string[]>([]); // títulos da categoria (pré-carregados)
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLUListElement>(null);
   const hasClosedManually = useRef(false);
 
   // Mantém o campo sempre "clicado": foca no início do round e devolve o foco
@@ -111,6 +112,18 @@ export function AnswerInput() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  // Garante que o item ativo navegado por teclado (setas) seja scrollado para dentro da área visível
+  useEffect(() => {
+    if (activeIndex >= 0 && dropdownRef.current) {
+      const activeEl = dropdownRef.current.querySelector(`#suggestion-${activeIndex}`);
+      if (activeEl) {
+        activeEl.scrollIntoView({
+          block: "nearest",
+        });
+      }
+    }
+  }, [activeIndex]);
 
   // Escolher uma sugestão = enviá-la imediatamente (quiz de velocidade).
   const chooseSuggestion = (s: string) => {
@@ -205,7 +218,7 @@ export function AnswerInput() {
             aria-activedescendant={activeIndex >= 0 ? `suggestion-${activeIndex}` : undefined}
           />
           {showSuggestions && (
-            <ul className={styles.dropdown} role="listbox">
+            <ul ref={dropdownRef} className={styles.dropdown} role="listbox">
               {suggestions.map((s, i) => (
                 <li
                   key={s}
