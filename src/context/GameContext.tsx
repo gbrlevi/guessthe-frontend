@@ -121,6 +121,8 @@ interface GameState {
       termoRoundDuration: number;
       termoHintDelay: number;
       mixedTermoRatio: number;
+      tensionEnabled?: boolean;
+      tensionRatio?: number;
     },
   ) => void;
   updateSettings: (patch: {
@@ -611,6 +613,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         termoRoundDuration: number;
         termoHintDelay: number;
         mixedTermoRatio: number;
+        tensionEnabled?: boolean;
+        tensionRatio?: number;
       },
     ) => {
       setAutocompleteEnabled(config.autocomplete);
@@ -628,6 +632,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         termo_round_duration: config.termoRoundDuration,
         termo_hint_delay: config.termoHintDelay,
         mixed_termo_ratio: config.mixedTermoRatio,
+        tension_enabled: config.tensionEnabled,
+        tension_ratio: config.tensionRatio,
       });
     },
     [send],
@@ -775,9 +781,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Tema visual do Modo Tensão: injeta a classe global no <body>. No Quiz, durante
   // o gameplay das rodadas finais; no Termo, na janela de tensão / última tentativa.
   useEffect(() => {
-    const quizActive = isTension && (phase === "question" || phase === "reveal" || phase === "scoreboard");
+    const quizActive =
+      gameMode !== "termo" &&
+      isTension &&
+      (phase === "question" || phase === "reveal" || phase === "scoreboard");
     document.body.classList.toggle("tension-mode", quizActive || termoTensionActive);
-  }, [isTension, phase, termoTensionActive]);
+  }, [isTension, phase, termoTensionActive, gameMode]);
 
   // Limpeza ao desmontar o provider: libera elementos de áudio/timers e remove
   // o tema de tensão (evita vazamento de memória / classe órfã no <body>).

@@ -281,6 +281,8 @@ export type ClientMessage =
       allow_multiple_attempts?: boolean;
       end_on_all_correct?: boolean;
       depixel_speed?: number;
+      tension_enabled?: boolean;
+      tension_ratio?: number;
       game_mode?: GameMode;
       termo_mode?: TermoMode;
       termo_round_duration?: number;

@@ -298,8 +298,36 @@ export function Lobby() {
     if (starting) return;
     sfx.click();
     setStarting(true);
-    const startConfig = { ...config, mixedTermoRatio: config.mixedTermoPercent / 100 };
-    startGame(selected, rounds, startConfig);
+
+    // 1. Filtrar as categorias selecionadas de acordo com o modo de jogo atual para evitar enviar categorias inválidas
+    let categoriesToSend = selected.filter((c) =>
+      config.gameMode === "termo"
+        ? c.startsWith("termo_")
+        : config.gameMode === "quiz"
+          ? !c.startsWith("termo_")
+          : true, // misto: tudo
+    );
+
+    // 2. Se nenhuma categoria estiver selecionada, selecionamos automaticamente todas as categorias válidas para o modo atual
+    if (categoriesToSend.length === 0) {
+      categoriesToSend = categories
+        .filter((c) =>
+          config.gameMode === "termo"
+            ? c.category.startsWith("termo_")
+            : config.gameMode === "quiz"
+              ? !c.category.startsWith("termo_")
+              : true,
+        )
+        .map((c) => c.category);
+    }
+
+    const startConfig = {
+      ...config,
+      tensionEnabled: config.tensionEnabled,
+      tensionRatio: 1 - config.tensionPercent / 100,
+      mixedTermoRatio: config.mixedTermoPercent / 100,
+    };
+    startGame(categoriesToSend, rounds, startConfig);
   };
 
   // Valores visíveis pelo guest refletem as configurações sincronizadas pelo host
