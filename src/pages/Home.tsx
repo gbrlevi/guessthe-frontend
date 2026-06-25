@@ -36,7 +36,13 @@ export function Home() {
       return "";
     }
   });
-  const [roomName, setRoomName] = useState("");
+  const [roomName, setRoomName] = useState(() => {
+    try {
+      return localStorage.getItem("ldk-roomname") || "";
+    } catch {
+      return "";
+    }
+  });
   const [code, setCode] = useState("");
   const [avatarIndex, setAvatarIndex] = useState(() => {
     try {
@@ -73,6 +79,14 @@ export function Home() {
       // ignore
     }
   }, [avatarKind]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ldk-roomname", roomName);
+    } catch {
+      // ignore
+    }
+  }, [roomName]);
 
   const prevAvatar = () => setAvatarIndex((i) => (i - 1 + AVATAR_KINDS.length) % AVATAR_KINDS.length);
   const nextAvatar = () => setAvatarIndex((i) => (i + 1) % AVATAR_KINDS.length);

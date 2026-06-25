@@ -78,9 +78,42 @@ export function Lobby() {
     changeIdentity,
   } = useGame();
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [rounds, setRounds] = useState(10);
-  const [config, setConfig] = useState<GameConfig>(DEFAULT_CONFIG);
+  const [selected, setSelected] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("ldk-host-settings");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed.selected)) return parsed.selected;
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+  const [rounds, setRounds] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem("ldk-host-settings");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.rounds === "number") return parsed.rounds;
+      }
+    } catch {
+      // ignore
+    }
+    return 10;
+  });
+  const [config, setConfig] = useState<GameConfig>(() => {
+    try {
+      const saved = localStorage.getItem("ldk-host-settings");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.config) return { ...DEFAULT_CONFIG, ...parsed.config };
+      }
+    } catch {
+      // ignore
+    }
+    return DEFAULT_CONFIG;
+  });
   const [showConfig, setShowConfig] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showLeave, setShowLeave] = useState(false);
@@ -111,6 +144,74 @@ export function Lobby() {
       .then((data: CategoryInfo[]) => setCategories(data))
       .catch(() => setCategories([]));
   }, []);
+
+  // Quando o host entra ou o jogador se torna host, sincroniza as configurações locais com o servidor
+  useEffect(() => {
+    if (isHost) {
+      updateSettings({
+        categories: selected,
+        totalRounds: rounds,
+        roundDuration: config.roundDuration,
+        allowMultipleAttempts: config.allowMultipleAttempts,
+        endOnAllCorrect: config.endOnAllCorrect,
+        depixelSpeed: config.depixelSpeed,
+        tensionEnabled: config.tensionEnabled,
+        tensionRatio: 1 - config.tensionPercent / 100,
+        gameMode: config.gameMode,
+        termoMode: config.termoMode,
+        submissionCooldown: config.submissionCooldown,
+        termoRoundDuration: config.termoRoundDuration,
+        termoHintDelay: config.termoHintDelay,
+        mixedTermoRatio: config.mixedTermoPercent / 100,
+      });
+    }
+  }, [isHost]);
+
+  // Se o jogador for guest, sincroniza o estado local com as configurações recebidas do servidor/host
+  useEffect(() => {
+    if (!isHost && settings) {
+      if (settings.categories) {
+        setSelected(settings.categories);
+      }
+      if (settings.total_rounds !== undefined) {
+        setRounds(settings.total_rounds);
+      }
+
+      setConfig({
+        roundDuration: settings.round_duration ?? DEFAULT_CONFIG.roundDuration,
+        allowMultipleAttempts: settings.allow_multiple_attempts ?? DEFAULT_CONFIG.allowMultipleAttempts,
+        endOnAllCorrect: settings.end_on_all_correct ?? DEFAULT_CONFIG.endOnAllCorrect,
+        autocomplete: autocompleteEnabled,
+        depixelSpeed: settings.depixel_speed ?? DEFAULT_CONFIG.depixelSpeed,
+        tensionEnabled: settings.tension_enabled ?? DEFAULT_CONFIG.tensionEnabled,
+        tensionPercent: Math.round((1 - (settings.tension_ratio ?? 0.7)) * 100),
+        gameMode: settings.game_mode ?? DEFAULT_CONFIG.gameMode,
+        termoMode: settings.termo_mode ?? DEFAULT_CONFIG.termoMode,
+        submissionCooldown: settings.submission_cooldown ?? DEFAULT_CONFIG.submissionCooldown,
+        termoRoundDuration: settings.termo_round_duration ?? DEFAULT_CONFIG.termoRoundDuration,
+        termoHintDelay: settings.termo_hint_delay ?? DEFAULT_CONFIG.termoHintDelay,
+        mixedTermoPercent: Math.round((settings.mixed_termo_ratio ?? 0.5) * 100),
+      });
+    }
+  }, [isHost, settings, autocompleteEnabled]);
+
+  // Salva as configurações do host no localStorage sempre que alteradas
+  useEffect(() => {
+    if (isHost) {
+      try {
+        localStorage.setItem(
+          "ldk-host-settings",
+          JSON.stringify({
+            selected,
+            rounds,
+            config,
+          })
+        );
+      } catch {
+        // ignore
+      }
+    }
+  }, [isHost, selected, rounds, config]);
 
   // Se o servidor devolver erro (ex: sem questões), libera o botão de iniciar
   useEffect(() => {
