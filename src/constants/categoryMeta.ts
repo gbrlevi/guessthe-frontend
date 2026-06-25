@@ -107,6 +107,12 @@ export const CATEGORY_META: Record<string, CategoryMeta> = {
     iconKind: "steam",
     mediaHint: "De qual jogo é essa review?",
   },
+  reviews_backlogged: {
+    label: "Reviews do Backloggd",
+    icon: "📝",
+    iconKind: "steam",
+    mediaHint: "De qual jogo é essa review?",
+  },
   termo_anime: {
     label: "Termo — Anime",
     icon: "🔤",
